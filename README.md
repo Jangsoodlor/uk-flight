@@ -11,7 +11,7 @@ Coming soon
 Coming soon
 
 ## References
-- ![Project Proposal](https://docs.google.com/document/d/1QlqTjomPm1xXTJekI6Y5g-Xd2_wno9aJruF_hKrIFtU/edit#heading=h.s7vi53uqxnxi)
-- ![Development Plan](https://github.com/Jangsoodlor/uk-flight/wiki#development-plan)
+- [Project Proposal](https://docs.google.com/document/d/1QlqTjomPm1xXTJekI6Y5g-Xd2_wno9aJruF_hKrIFtU/edit#heading=h.s7vi53uqxnxi)
+- [Development Plan](https://github.com/Jangsoodlor/uk-flight/wiki#development-plan)
 - UML Diagram (coming soon)
-- ![Data Source](https://www.caa.co.uk/data-and-analysis/uk-aviation-market/flight-punctuality/uk-flight-punctuality-statistics/2024/)
+- [Data Source](https://www.caa.co.uk/data-and-analysis/uk-aviation-market/flight-punctuality/uk-flight-punctuality-statistics/2024/)
