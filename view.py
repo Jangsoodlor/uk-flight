@@ -14,13 +14,18 @@ class TabManager(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title('UK Flight')
+        self.graphs = {}
         self.init_components()
 
     def init_components(self):
         tab_controller = ttk.Notebook(self)
-        graph = ConcreteGraph(self)
-        graph.pack(side='left', expand=True, fill='both')
-        tab_controller.add(graph, text='test_tab')
+        pack = {'side':'left', 'expand':True, 'fill':'both'}
+        graph_dict = {'Compare Delay with Previous Year': CorrGraph}
+        for key, val in graph_dict.items():
+            graph = val(self)
+            self.graphs[key] = graph
+            graph.pack(pack)
+            tab_controller.add(graph, text=key)
         tab_controller.pack(expand=True, fill='both')
 
     def exit(self):
@@ -53,15 +58,21 @@ class Graph(tk.Frame, abc.ABC):
     def plot_graph(self, caller):
         raise NotImplementedError('Abstract Method')
 
-class ConcreteGraph(Graph):
+    @property
+    @abc.abstractmethod
+    def get_first_combobox(self):
+        raise NotImplementedError('Abstract Property')
+
+class CorrGraph(Graph):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
-        self.side_panel.create_selector('test_2')
-        self.side_panel.set_selector_value('test_2', ['a', 'b'])
-        self.side_panel.create_button('Hello')
-        self.side_panel.bind_button('Hello', self.plot_graph)
+        self.side_panel.create_selector('Airport')
+        self.side_panel.create_selector('Origin (Optional)')
+        self.side_panel.create_selector('Destination (Optional)')
+        self.side_panel.create_button('PLOT')
+        self.side_panel.bind_button('PLOT', self.plot_graph)
 
     def plot_graph(self, caller):
         a = lambda : random.randint(1,100)
@@ -75,6 +86,10 @@ class ConcreteGraph(Graph):
         sns.barplot(data=data)
         self.canvas.draw()
 
+    @property
+    def get_first_combobox(self):
+        return 'Airport'
+
 class SidePanel(tk.Frame):
     def __init__(self, master=None,cnf={},**kwargs):
         super().__init__(master, cnf, **kwargs)
@@ -82,12 +97,11 @@ class SidePanel(tk.Frame):
         self.buttons = {}
         self.padding = {'pady':10}
 
-    def create_selector(self, name, val=None):
+    def create_selector(self, name):
         selector = Selector(self)
         selector.label = name
-        if val:
-            selector.combobox_val = val
         self.selectors[name] = selector
+        selector.set_state('disabled')
         selector.pack(self.padding)
 
     def get_selector(self, name):
@@ -147,6 +161,9 @@ class Selector(tk.Frame):
     @combobox_val.setter
     def combobox_val(self, val:list) -> None:
         self.__combobox['values'] = val
+
+    def set_state(self, state):
+        self.__combobox['state'] = state
 
 if __name__ == '__main__':
     a = TabManager()
