@@ -1,13 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
+import abc
+
+import random
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+import seaborn as sns
 import pandas as pd
 
 
-class UI(tk.Tk):
+class TabManager(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title('UK Flight')
@@ -15,64 +18,136 @@ class UI(tk.Tk):
 
     def init_components(self):
         tab_controller = ttk.Notebook(self)
-
-        actual_tab = ControlPanel(self)
-        actual_tab.pack(padx=20, pady=20, anchor='e',expand=True, fill='both')
-        tab_controller.add(actual_tab, text='test_tab')
+        graph = ConcreteGraph(self)
+        graph.pack(side='left', expand=True, fill='both')
+        tab_controller.add(graph, text='test_tab')
         tab_controller.pack(expand=True, fill='both')
 
+    def exit(self):
+        plt.close('all')
+
     def run(self):
+        self.protocol('WM_DELETE_WINDOW', exit)
         self.mainloop()
 
-
-class ControlPanel(tk.Frame):
+class Graph(tk.Frame, abc.ABC):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
-        self.selector_instances = {}
         self.init_components()
 
     def init_components(self):
-        if 'origin' not in self.selector_instances:
-            self.create_selector('origin')
+        self.side_panel = SidePanel(self)
+        self.side_panel.pack(side='right', padx=10)
+        self.add_side_panel_elements()
+
+        self.fig = plt.figure()
+        self.canvas = FigureCanvasTkAgg(figure=self.fig, master=self)
+        NavigationToolbar2Tk(self.canvas, self)
+        self.canvas.get_tk_widget().pack(expand=True, fill='both')
+
+    @abc.abstractmethod
+    def add_side_panel_elements(self):
+        raise NotImplementedError('Abstract Method')
+
+    @abc.abstractmethod
+    def plot_graph(self, caller):
+        raise NotImplementedError('Abstract Method')
+
+class ConcreteGraph(Graph):
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+
+    def add_side_panel_elements(self):
+        self.side_panel.create_selector('test_2')
+        self.side_panel.set_selector_value('test_2', ['a', 'b'])
+        self.side_panel.create_button('Hello')
+        self.side_panel.bind_button('Hello', self.plot_graph)
+
+    def plot_graph(self, caller):
+        a = lambda : random.randint(1,100)
         data = pd.DataFrame({
-                            'Python': [11.27,69],
-                            'C': [2,3],
-                            'Java': [10.46,2],
-                            'C++': [7.5,1],
-                            'C#': [5.26,3]
+                            'Python': [a(), a()],
+                            'C': [a(), a()],
+                            'Java': [a(), a()],
+                            'C++': [a(), a()],
+                            'C#': [a(), a()]
                             })
-        fig, ax = plt.subplots(figsize=(3,3))
-        canvas = FigureCanvasTkAgg(fig, self)
         sns.barplot(data=data)
-        canvas.get_tk_widget().pack(side='left', expand=True)
+        self.canvas.draw()
 
-        for val in self.selector_instances.values():
-            val.pack(side='right')
+class SidePanel(tk.Frame):
+    def __init__(self, master=None,cnf={},**kwargs):
+        super().__init__(master, cnf, **kwargs)
+        self.selectors = {}
+        self.buttons = {}
+        self.padding = {'pady':10}
 
-    def create_selector(self, label):
-        selector = Selector()
-        selector.set_label(label)
-        self.selector_instances[label] = selector
+    def create_selector(self, name, val=None):
+        selector = Selector(self)
+        selector.label = name
+        if val:
+            selector.combobox_val = val
+        self.selectors[name] = selector
+        selector.pack(self.padding)
 
+    def get_selector(self, name):
+        if name in self.selectors:
+            return self.selectors[name]
+        return None
+
+    def set_selector_value(self, name, val):
+        self.selectors[name].combobox_val = val
+
+    def hide_selector(self, name):
+        self.get_selector(name).pack_forget()
+
+    def unhide_selector(self, name):
+        temp_list = list(self.selectors)
+        temp_list = temp_list[temp_list.index(name)+1:]
+        for id in temp_list:
+            self.hide_selector(id)
+        self.get_selector(name).pack(self.padding)
+        for id in temp_list:
+            self.get_selector(id).pack(self.padding)
+
+    def create_button(self, name):
+        button = tk.Button(self, text=name)
+        self.buttons[name] = button
+        button.pack(self.padding)
+
+    def bind_button(self, name, command):
+        self.buttons[name].bind('<Button>', command)
 
 class Selector(tk.Frame):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
-        self.pack_options = {'anchor':tk.CENTER}
-        self.label_textvar = tk.StringVar()
+        self.__label_var = tk.StringVar()
+        self.__combobox_var = tk.StringVar()
         self.init_components()
 
     def init_components(self):
-        label = tk.Label(self, textvariable=self.label_textvar)
-        self.selector = ttk.Combobox(self)
-        label.pack(self.pack_options)
-        self.selector.pack(self.pack_options)
+        label = tk.Label(self, textvariable=self.__label_var)
+        self.__combobox = ttk.Combobox(self, textvariable=self.__combobox_var)
+        pack = {'anchor':tk.CENTER}
+        label.pack(pack)
+        self.__combobox.pack(pack)
 
-    def set_label(self, text:str) -> None:
-        self.label_textvar.set(text)
+    @property
+    def label(self) -> None:
+        return self.__label_var.get()
 
-    def set_selector_val(self, val:list) -> None:
-        self.selector['values'] = val
+    @label.setter
+    def label(self, text:str) -> None:
+        self.__label_var.set(text)
+
+    @property
+    def combobox_val(self):
+        return self.__combobox_var.get()
+
+    @combobox_val.setter
+    def combobox_val(self, val:list) -> None:
+        self.__combobox['values'] = val
 
 if __name__ == '__main__':
-    UI().run()
+    a = TabManager()
+    a.run()
