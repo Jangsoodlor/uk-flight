@@ -11,13 +11,23 @@ class Controller:
         self.view.run()
 
     def feed_init_data(self):
-        data_method = {'Airport':self.model.get_airport_name}
-        for graph in self.view.graphs.values():
-            combobox_name = graph.get_first_combobox
-            data = data_method[combobox_name]()
-            graph.side_panel.set_selector_value(combobox_name, data)
-            graph.side_panel.get_selector(combobox_name).set_state('normal')
+        graphs = self.view.get_all_graphs()
+        for graph in graphs:
+            first_box_name = graph.side_panel.first_selector
+            data = self.model.get_selector_data(first_box_name.label)
+            first_box_name.val = data
+            graph.side_panel.disable_next_selectors(first_box_name.label)
+            graph.side_panel.bind_selectors(self.selector_selected)
 
+    def selector_selected(self, selector_name):
+        current_tab = self.view.graph_dict[self.view.get_current_tab()]
+        current_graph = self.view.graph_factory.get_instance(current_tab)
+        next_selector = current_graph.side_panel.get_next_selector(selector_name)
+        if next_selector:
+            current_graph.side_panel.disable_next_selectors(selector_name)
+            filters = current_graph.side_panel.get_selector_options()
+            data = self.model.get_selector_data(next_selector.label, filters)
+            next_selector.val = data
 
 if __name__ == '__main__':
     import os
