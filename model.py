@@ -30,9 +30,9 @@ class Model:
             temp_df = temp_df[temp_df['origin_destination'] == destination]
         return temp_df
 
-    def desc_stat_data(self, airport:str):
+    def desc_stat_data(self, origin:str):
         """Returns data for Descriptive Statistics"""
-        temp_df =  self.__df[self.__df['reporting_airport'] == airport]
+        temp_df =  self.__df[self.__df['reporting_airport'] == origin]
         return temp_df['average_delay_mins'].describe()
 
     def corr_data(self, airline:str, origin:str=None, destination:str=None):
@@ -68,11 +68,21 @@ class Model:
                     temp_df = temp_df[temp_df[column] == val]
         return list(temp_df[translate[name]].unique())
 
+    def get_graph_data(self, name, options):
+        """Get the data depending on the graph's type"""
+        translate = {'Corr':self.corr_data}
+        airline = None
+        origin = None
+        destination = None
+        for key, val in options.items():
+            if 'airline' in key.lower():
+                airline = val
+            elif 'origin' in key.lower():
+                origin = val
+            elif 'destination' in key.lower():
+                destination = val
+        return translate[name](airline, origin, destination)
+
 if __name__ == '__main__':
     df = pd.read_csv(os.path.join(os.getcwd(),
                                   'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
-
-    df_model = Model(df)
-    print(df_model.corr_data('LOGANAIR LTD'))
-    # print(df_model.bar_graph_data(['LOGANAIR LTD', 'EASTERN AIRWAYS']))
-    # print(df_model.get_origins())
