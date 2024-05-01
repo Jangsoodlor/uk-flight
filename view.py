@@ -2,12 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 import abc
 
-import random
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import seaborn as sns
-import pandas as pd
 
 
 class TabManager(tk.Tk):
@@ -27,18 +24,25 @@ class TabManager(tk.Tk):
             self.tab_controller.add(graph, text=key)
         self.tab_controller.pack(expand=True, fill='both')
 
+    def get_all_graphs(self):
+        return self.graph_factory.instances.values()
+
+    def get_current_tab_name(self):
+        """Get the name of the tab that's currently active"""
+        return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
+
+    def get_current_graph(self):
+        """Get the graph that's currently displayed"""
+        current_tab = self.get_current_tab_name()
+        current_graph = self.graph_factory.get_instance(current_tab)
+        return current_graph
+
     def exit(self):
         plt.close('all')
 
     def run(self):
         self.protocol('WM_DELETE_WINDOW', exit)
         self.mainloop()
-
-    def get_all_graphs(self):
-        return self.graph_factory.instances.values()
-
-    def get_current_tab(self):
-        return self.tab_controller.tab(self.tab_controller.select(), "text")
 
 class GraphFactory(tk.Frame, abc.ABC):
 
@@ -71,7 +75,7 @@ class GraphFactory(tk.Frame, abc.ABC):
         label = tk.Label(graph_frame, textvariable=self.__description)
         label.pack(anchor=tk.W)
 
-        self.fig = plt.figure()
+        self.fig, self.ax = plt.subplots()
         self.canvas = FigureCanvasTkAgg(figure=self.fig, master=graph_frame)
         NavigationToolbar2Tk(self.canvas, graph_frame)
         self.canvas.get_tk_widget().pack(expand=True, fill='both')
@@ -95,18 +99,16 @@ class CorrGraph(GraphFactory):
         self.side_panel.create_selector('Origin (Optional)')
         self.side_panel.create_selector('Destination (Optional)')
         self.side_panel.create_button('PLOT')
-        self.side_panel.bind_button('PLOT', self.plot_graph)
 
-    def plot_graph(self, caller):
-        a = lambda : random.randint(1,100)
-        data = pd.DataFrame({
-                            'Python': [a(), a()],
-                            'C': [a(), a()],
-                            'Java': [a(), a()],
-                            'C++': [a(), a()],
-                            'C#': [a(), a()]
-                            })
-        sns.barplot(data=data)
+    def plot_graph(self, data):
+        self.ax.clear()
+        sns.scatterplot(x="average_delay_mins",
+                        y="previous_year_month_average_delay",
+                        data=data, ax=self.ax)
+
+        self.ax.set_xlabel("Average Delay in January 2024 (minutes)")
+        self.ax.set_ylabel("Average Delay in January 2023 (minutes)")
+        self.ax.set_title("Average Delays")
         self.canvas.draw()
 
 class SidePanel(tk.Frame):
@@ -117,6 +119,7 @@ class SidePanel(tk.Frame):
         self.padding = {'pady':10}
 
     def create_selector(self, name):
+        """Creates a selector object"""
         selector = Selector(self)
         selector.label = name
         self.selectors[name] = selector
@@ -131,6 +134,7 @@ class SidePanel(tk.Frame):
 
     @property
     def first_selector(self):
+        """returns the first selector in the side panel"""
         name = iter(self.selectors)
         c = next(name)
         return self.selectors[c]
@@ -154,6 +158,7 @@ class SidePanel(tk.Frame):
             self.get_selector(i).set_state('disabled')
 
     def get_selector_options(self):
+        """Returns the options filled in the selector"""
         temp_dict = {}
         for selector in self.selectors.values():
             temp_dict[selector.label] = selector.val
