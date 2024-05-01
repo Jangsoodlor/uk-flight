@@ -28,13 +28,3 @@ class Controller:
             filters = current_graph.side_panel.get_selector_options()
             data = self.model.get_selector_data(next_selector.label, filters)
             next_selector.val = data
-
-if __name__ == '__main__':
-    import os
-    import pandas as pd
-    df = pd.read_csv(os.path.join(os.getcwd(),
-                                  'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
-    m = Model(df)
-    v = TabManager()
-    c = Controller(v,m)
-    c.run()
