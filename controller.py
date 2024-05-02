@@ -31,7 +31,7 @@ class Controller:
         graph_name = self.view.get_current_tab_name()
         options = graph.side_panel.get_selector_options()
         data = self.model.get_graph_data(graph_name, options)
-        graph.plot_graph(data)
+        graph.plot_graph(data[0], data[1])
         
 
     def selector_selected(self, selector_name):
