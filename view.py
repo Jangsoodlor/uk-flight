@@ -12,7 +12,9 @@ class TabManager(tk.Tk):
         super().__init__()
         self.title('UK Flight')
         self.graph_factory = GraphFactory
-        self.graph_dict = {'Compare Delay with Previous Year':'Corr'}
+        self.graph_dict = {'Compare Delay with Previous Year':'Corr',
+                           'Flights Cancelled vs Overall Flights' : 'Pie',
+                           'Distribution of Delays' : 'Dist'}
         self.init_components()
 
     def init_components(self):
@@ -52,7 +54,9 @@ class GraphFactory(tk.Frame, abc.ABC):
     def get_instance(cls, name, master=None):
         """Gets graph instance"""
         if name not in cls.instances:
-            factories = {'Corr': CorrGraph}
+            factories = {'Corr': CorrGraph,
+                         'Pie' : PieGraph,
+                         'Dist' : DistributionGraph}
             if name not in factories:
                 raise ValueError('Invalid graph')
             if master is None:
@@ -63,8 +67,15 @@ class GraphFactory(tk.Frame, abc.ABC):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.__description = tk.StringVar()
-        self.__description.set('hello')
         self.init_components()
+
+    @property
+    def description(self):
+        return self.__description.get()
+
+    @description.setter
+    def description(self, text:str):
+        self.__description.set(text)
 
     def init_components(self):
         self.side_panel = SidePanel(self)
@@ -86,11 +97,12 @@ class GraphFactory(tk.Frame, abc.ABC):
         raise NotImplementedError('Abstract Method')
 
     @abc.abstractmethod
-    def plot_graph(self, caller):
+    def plot_graph(self, data, title):
         raise NotImplementedError('Abstract Method')
 
 
 class CorrGraph(GraphFactory):
+    """A Correlation Graph tab"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
 
@@ -100,16 +112,55 @@ class CorrGraph(GraphFactory):
         self.side_panel.create_selector('Destination (Optional)')
         self.side_panel.create_button('PLOT')
 
-    def plot_graph(self, data):
+    def plot_graph(self, data, title):
         self.ax.clear()
         sns.scatterplot(x="average_delay_mins",
                         y="previous_year_month_average_delay",
                         data=data, ax=self.ax)
-
+        self.description = title[0]
         self.ax.set_xlabel("Average Delay in January 2024 (minutes)")
         self.ax.set_ylabel("Average Delay in January 2023 (minutes)")
-        self.ax.set_title("Average Delays")
+        self.ax.set_title(title[1])
         self.canvas.draw()
+
+
+class PieGraph(GraphFactory):
+    """A Pie Graph Tab"""
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+
+    def add_side_panel_elements(self):
+        self.side_panel.create_selector('Origin')
+        self.side_panel.create_selector('Destination')
+        self.side_panel.create_selector('Airline')
+        self.side_panel.create_button('PLOT')
+
+    def plot_graph(self, data,title):
+        self.ax.clear()
+        self.ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
+                    labeldistance=1.25, radius = 0.9)
+        self.ax.set_title(title)
+        self.ax.legend(['Flights not Cancelled', 'Flights Cancelled'])
+        self.ax.set_title(title)
+        self.canvas.draw()
+
+
+class DistributionGraph(GraphFactory):
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+
+    def add_side_panel_elements(self):
+        self.side_panel.create_selector('Origin')
+        self.side_panel.create_selector('Destination')
+        self.side_panel.create_selector('Airline')
+        self.side_panel.create_button('PLOT')
+
+    def plot_graph(self, data, title):
+        self.ax.clear()
+        self.ax = sns.barplot(x=data['Interval'], y=data['Percent'])
+        # self.ax.set_ylim(100)
+        self.canvas.draw()
+
 
 class SidePanel(tk.Frame):
     def __init__(self, master=None,cnf={},**kwargs):
@@ -187,6 +238,7 @@ class SidePanel(tk.Frame):
         self.get_selector(name).pack(self.padding)
         for i in temp_list:
             self.get_selector(i).pack(self.padding)
+
 
 class Selector(tk.Frame):
     def __init__(self, master=None, cnf={}, **kwargs):

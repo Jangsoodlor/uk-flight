@@ -22,7 +22,7 @@ class Model:
     def df(self):
         return self.__df
 
-    def filter_origin_destination(self, temp_df:pd.DataFrame, origin:str, destination:str):
+    def __filter_origin_destination(self, temp_df:pd.DataFrame, origin:str, destination:str):
         """Filters the origin and destination of a flight"""
         if origin:
             temp_df = temp_df[temp_df['reporting_airport'] == origin]
@@ -38,21 +38,54 @@ class Model:
     def corr_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for Correlation Plot"""
         temp_df = self.__df[self.__df['airline_name'] == airline]
-        temp_df = self.filter_origin_destination(temp_df, origin, destination)
+        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['average_delay_mins', 'previous_year_month_average_delay']]
-        return temp_df
+        title = f'Average delay of {airline}'
+        if origin:
+            title += f' from {origin}'
+        if destination:
+            title += f' to {destination}'
+        corr = temp_df.corr()['average_delay_mins']['previous_year_month_average_delay']
+        coefficient = f'Correlation Coefficient = {corr}'
+        return temp_df, (title, coefficient)
 
     def bar_graph_data(self, airlines, origin:str=None, destination:str=None):
         """Returns data for bar graph"""
         temp_df = self.__df[self.__df['airline_name'].isin(airlines)]
-        temp_df = self.filter_origin_destination(temp_df, origin, destination)
-        return temp_df
+        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
+        title = ''
+        return temp_df, title
 
-    def pie_chart_data(self, airline, origin:str=None, destination:str=None):
+    def pie_chart_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for pie chart"""
-        temp_df = temp_df[temp_df['airline_name'] == airline]
-        temp_df = self.filter_origin_destination(temp_df, origin, destination)
-        return temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
+        temp_df = self.__df[self.__df['airline_name'] == airline]
+        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
+        temp_df = temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
+        series = temp_df.sum()
+        title = f'Flights cancellation of {airline} from {origin} to {destination}'
+        return series, title
+
+    def distribution_data(self, airline:str, origin:str, destination:str):
+        """Returns data for distribution graph"""
+        temp_df = self.__df[self.__df['airline_name'] == airline]
+        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
+        filters = ['flights_more_than_15_minutes_early_percent',
+                   'flights_15_minutes_early_to_1_minute_early_percent',
+                   'flights_0_to_15_minutes_late_percent',
+                   'flights_between_16_and_30_minutes_late_percent',
+                   'flights_between_31_and_60_minutes_late_percent',
+                   'flights_between_61_and_120_minutes_late_percent',
+                   'flights_between_121_and_180_minutes_late_percent',
+                   'flights_between_181_and_360_minutes_late_percent',
+                   'flights_more_than_360_minutes_late_percent']
+        temp_df = temp_df.loc[:, filters]
+        temp_df = temp_df.reset_index()
+        temp_df = temp_df.loc[0]
+        temp_df = temp_df.reset_index()
+        temp_df = temp_df.loc[1:9]
+        temp_df.columns = ['Interval', 'Percent']
+        temp_df.groupby('Interval')
+        return temp_df, 'test'
 
     def get_selector_data(self, name:str, filter:dict=None):
         translate = {'Airline':'airline_name',
@@ -70,7 +103,9 @@ class Model:
 
     def get_graph_data(self, name, options):
         """Get the data depending on the graph's type"""
-        translate = {'Corr':self.corr_data}
+        translate = {'Corr':self.corr_data,
+                     'Pie' : self.pie_chart_data,
+                     'Dist' : self.distribution_data}
         airline = None
         origin = None
         destination = None
@@ -84,5 +119,13 @@ class Model:
         return translate[name](airline, origin, destination)
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     df = pd.read_csv(os.path.join(os.getcwd(),
                                   'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
+    m = Model(df)
+    fig, ax = plt.subplots()
+    a = m.distribution_data('EASTERN AIRWAYS', 'ABERDEEN', 'HUMBERSIDE')
+    print(a)
+    ax = sns.barplot(x=a['category'], y=a['percent'])
+    plt.show()
