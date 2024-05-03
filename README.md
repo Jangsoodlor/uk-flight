@@ -6,9 +6,11 @@ Coming soon
 
 ## How to install.
 0. Have Python install in your PC
-1. Clone this repository
-`git clone https://github.com/Jangsoodlor/uk-flight.git` Or  download as zip file and extract it.
-2. Install all dependencies required to run the program by typing ` pip install -r requirements.txt`
+1. Clone this repository or  download as zip file and extract it.
+2. Install all dependencies required to run the program 
+```
+pip install -r requirements.txt
+```
 
 
 ## How to run
