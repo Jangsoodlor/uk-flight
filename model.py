@@ -88,17 +88,21 @@ class Model:
         return temp_df, 'test'
 
     def get_selector_data(self, name:str, filter:dict=None):
+        if name == 'Measure for Comparison':
+            return ['average_delay_mins', 'flights_cancelled_percent']
         translate = {'Airline':'airline_name',
                           'Origin (Optional)' : 'reporting_airport',
                           'Origin' : 'reporting_airport',
                           'Destination (Optional)' : 'origin_destination',
                           'Destination' : 'origin_destination'}
+
         temp_df = self.__df.copy()
         if filter:
             for key, val in filter.items():
-                column = translate[key]
-                if val:
-                    temp_df = temp_df[temp_df[column] == val]
+                if key != 'Measure for Comparison':
+                    column = translate[key]
+                    if val:
+                        temp_df = temp_df[temp_df[column] == val]
         return list(temp_df[translate[name]].unique())
 
     def get_graph_data(self, name, options):
@@ -117,15 +121,3 @@ class Model:
             elif 'destination' in key.lower():
                 destination = val
         return translate[name](airline, origin, destination)
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    df = pd.read_csv(os.path.join(os.getcwd(),
-                                  'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
-    m = Model(df)
-    fig, ax = plt.subplots()
-    a = m.distribution_data('EASTERN AIRWAYS', 'ABERDEEN', 'HUMBERSIDE')
-    print(a)
-    ax = sns.barplot(x=a['category'], y=a['percent'])
-    plt.show()

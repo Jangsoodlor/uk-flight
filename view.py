@@ -14,10 +14,12 @@ class TabManager(tk.Tk):
         self.graph_factory = GraphFactory
         self.graph_dict = {'Compare Delay with Previous Year':'Corr',
                            'Flights Cancelled vs Overall Flights' : 'Pie',
-                           'Distribution of Delays' : 'Dist'}
+                           'Distribution of Delays' : 'Dist',
+                           'Bar Graph' : 'Bar'}
         self.init_components()
 
     def init_components(self):
+        self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
         pack = {'side':'left', 'expand':True, 'fill':'both'}
         for key,val in self.graph_dict.items():
@@ -26,7 +28,21 @@ class TabManager(tk.Tk):
             self.tab_controller.add(graph, text=key)
         self.tab_controller.pack(expand=True, fill='both')
 
+    def create_menu_bar(self):
+        """Creates the menu bar on the top of the screen"""
+        menubar = tk.Menu(self)
+        self.config(menu=menubar)
+        help_menu = tk.Menu(menubar)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        menubar.add_command(label='Exit', command=self.kill)
+
+    def kill(self):
+        """Kills the process"""
+        self.exit()
+        self.destroy()
+
     def get_all_graphs(self):
+        """Get all graphs, use in feed_data"""
         return self.graph_factory.instances.values()
 
     def get_current_tab_name(self):
@@ -40,6 +56,7 @@ class TabManager(tk.Tk):
         return current_graph
 
     def exit(self):
+        """Closes all graphs"""
         plt.close('all')
 
     def run(self):
@@ -47,6 +64,8 @@ class TabManager(tk.Tk):
         self.mainloop()
 
 class GraphFactory(tk.Frame, abc.ABC):
+    """A Factory of various types of Tabs that has a Graph
+    with an attached side panel"""
 
     instances = {}
 
@@ -56,7 +75,8 @@ class GraphFactory(tk.Frame, abc.ABC):
         if name not in cls.instances:
             factories = {'Corr': CorrGraph,
                          'Pie' : PieGraph,
-                         'Dist' : DistributionGraph}
+                         'Dist' : DistributionGraph,
+                         'Bar' : BarGraph}
             if name not in factories:
                 raise ValueError('Invalid graph')
             if master is None:
@@ -71,22 +91,25 @@ class GraphFactory(tk.Frame, abc.ABC):
 
     @property
     def description(self):
+        """Get the description of the tab"""
         return self.__description.get()
 
     @description.setter
     def description(self, text:str):
+        """Set the description of the tab"""
         self.__description.set(text)
 
     def init_components(self):
+        """init components"""
         self.side_panel = SidePanel(self)
         self.side_panel.pack(side='right', padx=10)
         self.add_side_panel_elements()
 
         graph_frame = tk.Frame(self)
         label = tk.Label(graph_frame, textvariable=self.__description)
-        label.pack(anchor=tk.W)
+        label.pack(anchor=tk.W, side=tk.BOTTOM)
 
-        self.fig, self.ax = plt.subplots()
+        self.fig, self.ax = plt.subplots(dpi=90)
         self.canvas = FigureCanvasTkAgg(figure=self.fig, master=graph_frame)
         NavigationToolbar2Tk(self.canvas, graph_frame)
         self.canvas.get_tk_widget().pack(expand=True, fill='both')
@@ -94,10 +117,12 @@ class GraphFactory(tk.Frame, abc.ABC):
 
     @abc.abstractmethod
     def add_side_panel_elements(self):
+        """An abstract method to add elements to the side panel"""
         raise NotImplementedError('Abstract Method')
 
     @abc.abstractmethod
     def plot_graph(self, data, title):
+        """An abstract method to plot the graphs"""
         raise NotImplementedError('Abstract Method')
 
 
@@ -107,12 +132,15 @@ class CorrGraph(GraphFactory):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        """Add side panel elements for correlation graph"""
+        self.description = 'See correlation of average delay of airlines'
         self.side_panel.create_selector('Airline')
         self.side_panel.create_selector('Origin (Optional)')
         self.side_panel.create_selector('Destination (Optional)')
         self.side_panel.create_button('PLOT')
 
     def plot_graph(self, data, title):
+        """Plots the correlation graph and set correlation coefficient"""
         self.ax.clear()
         sns.scatterplot(x="average_delay_mins",
                         y="previous_year_month_average_delay",
@@ -130,6 +158,7 @@ class PieGraph(GraphFactory):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        self.description = 'See the amount of flights cancelled compared to all flights'
         self.side_panel.create_selector('Origin')
         self.side_panel.create_selector('Destination')
         self.side_panel.create_selector('Airline')
@@ -150,6 +179,7 @@ class DistributionGraph(GraphFactory):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        self.description = 'See the distribution of delays'
         self.side_panel.create_selector('Origin')
         self.side_panel.create_selector('Destination')
         self.side_panel.create_selector('Airline')
@@ -157,53 +187,95 @@ class DistributionGraph(GraphFactory):
 
     def plot_graph(self, data, title):
         self.ax.clear()
-        self.ax = sns.barplot(x=data['Interval'], y=data['Percent'])
-        # self.ax.set_ylim(100)
+        sns.barplot(x=data['Interval'], y=data['Percent'], ax=self.ax)
+        interval_label = [
+            '< -15',
+            '[-15,1]',
+            '[0,15]',
+            '[16,30]',
+            '[31,60]',
+            '[61,120]',
+            '[121,180]',
+            '[181,360]',
+            '> 360',
+        ]
+        self.ax.set_xticks([i for i in range(9)])
+        self.ax.set_xticklabels(interval_label)
+        self.ax.set_xlabel('Delay Interval (minutes)')
         self.canvas.draw()
+
+class BarGraph(GraphFactory):
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+
+    def add_side_panel_elements(self):
+        self.side_panel.add_history_box()
+        self.side_panel.create_selector('Measure for Comparison')
+        self.side_panel.create_selector('Origin (Optional)')
+        self.side_panel.create_selector('Destination (Optional)')
+        self.side_panel.create_selector('Airline')
+        self.side_panel.create_button('ADD')
+        self.side_panel.create_button('REMOVE')
+        self.side_panel.create_button('PLOT')
+        self.side_panel.set_button_state('REMOVE', 'disabled')
+        self.side_panel.set_button_state('ADD', 'disabled')
+
+    def plot_graph(self, data, title):
+        pass
 
 
 class SidePanel(tk.Frame):
+    """The side panel"""
     def __init__(self, master=None,cnf={},**kwargs):
         super().__init__(master, cnf, **kwargs)
-        self.selectors = {}
-        self.buttons = {}
-        self.padding = {'pady':10}
+        self.__selectors = {}
+        self.__buttons = {}
+        self.__padding = {'pady':10}
+        self.history_box = None
 
     def create_selector(self, name):
         """Creates a selector object"""
         selector = Selector(self)
         selector.label = name
-        self.selectors[name] = selector
+        self.__selectors[name] = selector
         selector.set_state('readonly')
-        selector.pack(self.padding)
+        selector.pack(self.__padding)
+
+    def add_history_box(self):
+        self.history_box = HistoryBox(self)
+        self.history_box.pack(self.__padding)
+
+    @property
+    def is_history_box(self):
+        return bool(self.history_box)
 
     def get_selector(self, name):
         """Get selector by name"""
-        if name in self.selectors:
-            return self.selectors[name]
+        if name in self.__selectors:
+            return self.__selectors[name]
         return None
 
     @property
     def first_selector(self):
         """returns the first selector in the side panel"""
-        name = iter(self.selectors)
+        name = iter(self.__selectors)
         c = next(name)
-        return self.selectors[c]
+        return self.__selectors[c]
 
     def get_next_selector(self, name=None):
         """Returns the selector that is located immediately below the one specified
         Return None if there isn't any"""
-        temp_list = list(self.selectors)
+        temp_list = list(self.__selectors)
         if not name:
-            return self.selectors[temp_list[0]]
+            return self.__selectors[temp_list[0]]
         index = temp_list.index(name)+1
         if index < len(temp_list):
-            return self.selectors[temp_list[index]]
+            return self.__selectors[temp_list[index]]
         return None
 
     def disable_next_selectors(self, name):
         """Disable all selector objects located below the current one"""
-        temp_list = list(self.selectors)
+        temp_list = list(self.__selectors)
         temp_list = temp_list[temp_list.index(name)+1:]
         for i in temp_list:
             self.get_selector(i).set_state('disabled')
@@ -211,36 +283,98 @@ class SidePanel(tk.Frame):
     def get_selector_options(self):
         """Returns the options filled in the selector"""
         temp_dict = {}
-        for selector in self.selectors.values():
+        for selector in self.__selectors.values():
             temp_dict[selector.label] = selector.val
         return temp_dict
 
-    def create_button(self, name):
-        button = tk.Button(self, text=name)
-        self.buttons[name] = button
-        button.pack(self.padding)
-
-    def bind_button(self, name, command):
-        self.buttons[name].bind('<Button>', command)
-
     def bind_selectors(self, func, add=None):
-        for selector in self.selectors.values():
+        """Bind all selectors to a specific function"""
+        for selector in self.__selectors.values():
             selector.bind(func, add)
 
+    def bind_selector(self, name, func, add=None):
+        """Bind a specific selector"""
+        self.__selectors[name].bind(func, add)
+
+    def create_button(self, name):
+        """Creates a button"""
+        button = tk.Button(self, text=name)
+        self.__buttons[name] = button
+        button.pack(self.__padding)
+
+    def bind_button(self, name, func, add=None):
+        """bind a button to a specific function"""
+        self.__buttons[name].bind('<Button>', func)
+
+    def set_button_state(self, name, state):
+        """Set a state of a button"""
+        self.__buttons[name]['state'] = state
+
     def hide_selector(self, name):
+        """Hide a selector"""
         self.get_selector(name).pack_forget()
 
     def unhide_selector(self, name):
-        temp_list = list(self.selectors)
+        """Unhide a selector"""
+        temp_list = list(self.__selectors)
         temp_list = temp_list[temp_list.index(name)+1:]
         for i in temp_list:
             self.hide_selector(i)
-        self.get_selector(name).pack(self.padding)
+        self.get_selector(name).pack(self.__padding)
         for i in temp_list:
-            self.get_selector(i).pack(self.padding)
+            self.get_selector(i).pack(self.__padding)
 
+
+class HistoryBox(tk.Frame):
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+        self.init_components()
+
+    def init_components(self):
+        self.__listbox = tk.Listbox(self)
+        label = tk.Label(self, text='Selected Airlines')
+        label.pack()
+        scrollbar = tk.Scrollbar(self,
+                                      orient='vertical',
+                                      command=self.__listbox.yview)
+        self.__listbox.config(yscrollcommand=scrollbar.set)
+        self.__listbox.pack(side='left')
+        self.__listbox_val = []
+        scrollbar.pack(side='right', expand=True, fill='y')
+
+    def __update(self):
+        self.__listbox['listvariable'] = tk.Variable(value=self.__listbox_val)
+
+    @property
+    def values(self):
+        return self.__listbox_val
+
+    @values.setter
+    def values(self, lst):
+        self.__listbox_val = lst
+        if not lst:
+            self.__listbox.selection_clear(0, 'end')
+        self.__update()
+
+    def append(self, val):
+        self.__listbox_val.append(val)
+        self.__update()
+
+    def remove(self, val):
+        self.__listbox_val.remove(val)
+        self.__update()
+
+    def bind(self, func, add=None):
+        try:
+            def bind_function(event):
+                cur_sel = self.__listbox.get(self.__listbox.curselection())
+                func(cur_sel)
+            self.__listbox.bind('<<ListboxSelect>>', bind_function, add)
+        except Exception:
+            pass
 
 class Selector(tk.Frame):
+    """An object that consists of a label and a combobox"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.__label_var = tk.StringVar()
@@ -248,6 +382,7 @@ class Selector(tk.Frame):
         self.init_components()
 
     def init_components(self):
+        """init components"""
         label = tk.Label(self, textvariable=self.__label_var)
         self.__combobox = ttk.Combobox(self, textvariable=self.__combobox_var)
         pack = {'anchor':tk.CENTER}
@@ -255,6 +390,7 @@ class Selector(tk.Frame):
         self.__combobox.pack(pack)
 
     def set_state(self, state):
+        """Set the state of the combobox"""
         self.__combobox['state'] = state
         if state == 'disabled':
             self.__combobox_var.set('')
@@ -268,21 +404,28 @@ class Selector(tk.Frame):
 
     @property
     def label(self) -> None:
+        """Return label"""
         return self.__label_var.get()
 
     @label.setter
     def label(self, text:str) -> None:
+        """Set the label"""
         self.__label_var.set(text)
 
     @property
     def val(self):
+        """Get the value of the combobox"""
         return self.__combobox_var.get()
 
     @val.setter
     def val(self, val:list) -> None:
+        """Set combobox value"""
         self.__combobox['values'] = val
         self.__combobox['state'] = 'readonly'
         self.__combobox_var.set('')
+
+    def set_selected(self, val:str):
+        self.__combobox_var.set(val)
 
 if __name__ == '__main__':
     root = tk.Tk()
