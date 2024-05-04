@@ -54,11 +54,15 @@ class Model:
         temp_df = self.__df[self.__df['airline_name'].isin(airlines)]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['airline_name', compare]]
+        temp_df = temp_df.groupby('airline_name').mean()
+        temp_df = temp_df.reset_index()
         title = f'Comparing {compare}'
         return (temp_df.iloc[:,0], temp_df.iloc[:,1]), title
 
     def pie_chart_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for pie chart"""
+        if not(airline and origin and destination):
+            raise ValueError('Please fill in all fields before plotting')
         temp_df = self.__df[self.__df['airline_name'] == airline]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
@@ -68,6 +72,8 @@ class Model:
 
     def distribution_data(self, airline:str, origin:str, destination:str):
         """Returns data for distribution graph"""
+        if not(airline and origin and destination):
+            raise ValueError('Please fill in all fields')
         temp_df = self.__df[self.__df['airline_name'] == airline]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         filters = ['flights_more_than_15_minutes_early_percent',
