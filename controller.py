@@ -45,7 +45,8 @@ class Controller:
         panel = graph.side_panel
         selector =  panel.get_selector(name)
         data = self.model.get_selector_data(selector.label, filters)
-        selector.val = data
+        data.sort()
+        selector.val = [''] + data
 
     def history_box_selected(self, cur_sel):
         """Enabled a remove button when historybox is selected"""
@@ -112,7 +113,8 @@ class Controller:
             panel.disable_next_selectors(selector_name)
             filters = panel.get_selector_options()
             data = self.model.get_selector_data(next_selector.label, filters)
-            next_selector.val = data
+            data.sort()
+            next_selector.val = [''] + data
             if panel.is_history_box:
                 panel.history_box.values = []
                 self.always_active_selector(graph, 'Airline', filters)

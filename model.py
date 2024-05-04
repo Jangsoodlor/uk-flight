@@ -6,7 +6,8 @@ from numpy import number
 class Model:
     """The model class"""
     def __init__(self, dataframe: pd.DataFrame) -> None:
-        self.__df = dataframe
+        self.__df = dataframe[dataframe['number_flights_matched'] > 0]
+        self.__df.reset_index(inplace=True)
 
     @classmethod
     def remove_outlier(cls, dataframe, column:list = None) -> pd.DataFrame:
@@ -58,6 +59,8 @@ class Model:
 
     def bar_graph_data(self, airlines, compare, origin:str=None, destination:str=None):
         """Returns data for bar graph"""
+        if not airlines:
+            raise ValueError('Please select at least 1 airline')
         temp_df = self.df[self.df['airline_name'].isin(airlines)]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['airline_name', compare]]
@@ -143,5 +146,5 @@ if __name__ == '__main__':
     df = df = pd.read_csv(os.path.join(os.getcwd(),
                                 'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
     m = Model(df)
-    a = m.bar_graph_data(['WIZZ AIR', 'EASTERN AIRWAYS'], 'average_delay_mins')
+    a = m.pie_chart_data('BA CITYFLYER LTD', 'SOUTHAMPTON', 'SALZBURG')
     print(a[0])
