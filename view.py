@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from graphs import GraphFactory
+from descstat import DescStat
 import matplotlib.pyplot as plt
 
 
@@ -21,14 +22,17 @@ class TabManager(tk.Tk):
 
     def init_components(self):
         """Initialise components"""
+        pack = {'side':'left', 'expand':True, 'fill':'both'}
         self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
-        pack = {'side':'left', 'expand':True, 'fill':'both'}
+        self.desc_stat = DescStat(self)
+        self.desc_stat.pack(pack)
+        self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
         for key,val in self.graph_dict.items():
             graph = self.graph_factory.get_instance(val, self)
             graph.pack(pack)
             self.tab_controller.add(graph, text=key)
-        self.tab_controller.pack(expand=True, fill='both')
+        self.tab_controller.pack(pack)
 
     def create_menu_bar(self):
         """Creates the menu bar on the top of the screen"""

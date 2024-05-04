@@ -37,7 +37,7 @@ class Model:
     def desc_stat_data(self, origin:str):
         """Returns data for Descriptive Statistics"""
         temp_df =  self.df[self.df['reporting_airport'] == origin]
-        return temp_df['average_delay_mins'].describe()
+        return str(temp_df['average_delay_mins'].describe())
 
     def corr_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for Correlation Plot"""
@@ -146,5 +146,5 @@ if __name__ == '__main__':
     df = df = pd.read_csv(os.path.join(os.getcwd(),
                                 'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
     m = Model(df)
-    a = m.pie_chart_data('BA CITYFLYER LTD', 'SOUTHAMPTON', 'SALZBURG')
-    print(a[0])
+    a = m.desc_stat_data('SOUTHAMPTON')
+    print(str(a))

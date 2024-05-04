@@ -70,11 +70,11 @@ class SidePanel(tk.Frame):
     def bind_selectors(self, func, add=None):
         """Bind all selectors to a specific function"""
         for selector in self.__selectors.values():
-            selector.bind(func, add)
+            selector.binder(func, add)
 
     def bind_selector(self, name, func, add=None):
         """Bind a specific selector"""
-        self.__selectors[name].bind(func, add)
+        self.__selectors[name].binder(func, add)
 
     def create_button(self, name):
         """Creates a button"""
@@ -156,7 +156,7 @@ class HistoryBox(tk.Frame):
         self.__listbox_val.remove(val)
         self.__update()
 
-    def bind(self, func, add=None):
+    def binder(self, func, add=None):
         """Bind the listbox. It'll inject the function with the current selection"""
         try:
             def bind_function(event):
@@ -189,7 +189,7 @@ class Selector(tk.Frame):
             self.__combobox_var.set('')
             self.__combobox['values'] = []
 
-    def bind(self, func, add=None):
+    def binder(self, func, add=None):
         """Binds the combobox"""
         def bind_function(event):
             func(self.__label_var.get())

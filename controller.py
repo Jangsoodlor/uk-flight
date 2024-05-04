@@ -12,9 +12,25 @@ class Controller:
         """Run the app"""
         self.view.run()
 
+    def feed_data(self, graph, name, filters=None):
+        """Set the data of a certain combobox in a specific graph"""
+        panel = graph.side_panel
+        selector =  panel.get_selector(name)
+        data = self.model.get_selector_data(selector.label, filters)
+        data.sort()
+        selector.val = [''] + data
+
     def feed_init_data(self):
         """Fill the first selectors of each tab with initial data"""
         self.feed_graphs_init_data()
+        self.feed_desc_stat_init_data()
+
+    def feed_desc_stat_init_data(self):
+        """Fill the data for descriptive statistics combobox"""
+        data = data = self.model.get_selector_data('Origin', None)
+        data.sort()
+        self.view.desc_stat.val = [''] + data
+        self.view.desc_stat.binder(self.insert_desc_stat_text)
 
     def feed_graphs_init_data(self):
         """filled the first selector of each graph with initial datas.
@@ -22,31 +38,26 @@ class Controller:
         graphs = self.view.get_all_graphs()
         for graph in graphs:
             panel = graph.side_panel
-            first_box_name = panel.first_selector
-            data = self.model.get_selector_data(first_box_name.label)
-            data.sort()
-            data = [''] + data
-            first_box_name.val = data
-            panel.disable_next_selectors(first_box_name.label)
+            first_box = panel.first_selector
+            self.feed_data(graph, first_box.label, None)
+            panel.disable_next_selectors(first_box.label)
             panel.bind_selectors(self.selector_selected)
             panel.bind_button('PLOT', self.activate_plot)
             if panel.is_history_box:
-                panel.history_box.bind(self.history_box_selected)
+                panel.history_box.binder(self.history_box_selected)
                 panel.bind_button('ADD', self.add_to_history_box)
                 panel.bind_button('REMOVE', self.remove_from_history_box)
                 panel.bind_selector('Airline', self.airlines_selected)
                 panel.set_button_state('PLOT', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
-                self.always_active_selector(graph, 'Airline')
-                self.always_active_selector(graph, 'Origin (Optional)')
+                self.feed_data(graph, 'Airline')
+                self.feed_data(graph, 'Origin (Optional)')
 
-    def always_active_selector(self, graph, name, filters=None):
-        """Make a certian selector always active"""
-        panel = graph.side_panel
-        selector =  panel.get_selector(name)
-        data = self.model.get_selector_data(selector.label, filters)
-        data.sort()
-        selector.val = [''] + data
+    def insert_desc_stat_text(self, airline):
+        """Insert descriptive statistics"""
+        title = f'Average delay of flights departed from {airline} in minutes\n'
+        describe = title + self.model.desc_stat_data(airline)
+        self.view.desc_stat.insert_text(describe)
 
     def history_box_selected(self, cur_sel):
         """Enabled a remove button when historybox is selected"""
@@ -112,9 +123,7 @@ class Controller:
         if next_selector:
             panel.disable_next_selectors(selector_name)
             filters = panel.get_selector_options()
-            data = self.model.get_selector_data(next_selector.label, filters)
-            data.sort()
-            next_selector.val = [''] + data
+            self.feed_data(graph, next_selector.label, filters)
             if panel.is_history_box:
                 panel.history_box.values = []
-                self.always_active_selector(graph, 'Airline', filters)
+                self.feed_data(graph, 'Airline', filters)
