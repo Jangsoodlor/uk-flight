@@ -85,6 +85,7 @@ class Controller:
                 graph.plot_graph(data, title)
         except Exception as e:
             messagebox.showerror('Error', e)
+            graph.side_panel.set_button_state('PLOT', 'normal')
 
 
     def selector_selected(self, selector_name):
