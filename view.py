@@ -15,7 +15,8 @@ class TabManager(tk.Tk):
         self.graph_dict = {'Compare Delay with Previous Year':'Corr',
                            'Flights Cancelled vs Overall Flights' : 'Pie',
                            'Distribution of Delays' : 'Dist',
-                           'Bar Graph' : 'Bar'}
+                           'Comparing Flight Cancellations' : 'flights_cancelled_percent',
+                           'Comparing Average Delays' : 'average_delay_mins'}
         self.init_components()
 
     def init_components(self):
@@ -45,7 +46,7 @@ class TabManager(tk.Tk):
         """Get all graphs, use in feed_data"""
         return self.graph_factory.instances.values()
 
-    def get_current_tab_name(self):
+    def get_current_tab_name(self) -> str:
         """Get the name of the tab that's currently active"""
         return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
 
@@ -76,7 +77,8 @@ class GraphFactory(tk.Frame, abc.ABC):
             factories = {'Corr': CorrGraph,
                          'Pie' : PieGraph,
                          'Dist' : DistributionGraph,
-                         'Bar' : BarGraph}
+                         'average_delay_mins' : BarGraph,
+                         'flights_cancelled_percent' : BarGraph}
             if name not in factories:
                 raise ValueError('Invalid graph')
             if master is None:
@@ -202,6 +204,7 @@ class DistributionGraph(GraphFactory):
         self.ax.set_xticks([i for i in range(9)])
         self.ax.set_xticklabels(interval_label)
         self.ax.set_xlabel('Delay Interval (minutes)')
+        self.ax.set_title(title)
         self.canvas.draw()
 
 class BarGraph(GraphFactory):
@@ -210,7 +213,6 @@ class BarGraph(GraphFactory):
 
     def add_side_panel_elements(self):
         self.side_panel.add_history_box()
-        self.side_panel.create_selector('Measure for Comparison')
         self.side_panel.create_selector('Origin (Optional)')
         self.side_panel.create_selector('Destination (Optional)')
         self.side_panel.create_selector('Airline')
@@ -221,7 +223,10 @@ class BarGraph(GraphFactory):
         self.side_panel.set_button_state('ADD', 'disabled')
 
     def plot_graph(self, data, title):
-        pass
+        self.ax.clear()
+        sns.barplot(x=data[0], y=data[1], ax=self.ax)
+        self.ax.set_title(title)
+        self.canvas.draw()
 
 
 class SidePanel(tk.Frame):
@@ -305,6 +310,10 @@ class SidePanel(tk.Frame):
     def bind_button(self, name, func, add=None):
         """bind a button to a specific function"""
         self.__buttons[name].bind('<Button>', func)
+
+    def get_button_state(self, name):
+        """Get a state of a button"""
+        return self.__buttons[name]['state']
 
     def set_button_state(self, name, state):
         """Set a state of a button"""

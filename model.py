@@ -49,12 +49,13 @@ class Model:
         coefficient = f'Correlation Coefficient = {corr}'
         return temp_df, (title, coefficient)
 
-    def bar_graph_data(self, airlines, origin:str=None, destination:str=None):
+    def bar_graph_data(self, airlines, compare, origin:str=None, destination:str=None):
         """Returns data for bar graph"""
         temp_df = self.__df[self.__df['airline_name'].isin(airlines)]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
-        title = ''
-        return temp_df, title
+        temp_df = temp_df.loc[:, ['airline_name', compare]]
+        title = f'Comparing {compare}'
+        return (temp_df.iloc[:,0], temp_df.iloc[:,1]), title
 
     def pie_chart_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for pie chart"""
@@ -85,11 +86,10 @@ class Model:
         temp_df = temp_df.loc[1:9]
         temp_df.columns = ['Interval', 'Percent']
         temp_df.groupby('Interval')
-        return temp_df, 'test'
+        title = f'Distribution of Delay Intervals of {airline}'
+        return temp_df, title
 
     def get_selector_data(self, name:str, filter:dict=None):
-        if name == 'Measure for Comparison':
-            return ['average_delay_mins', 'flights_cancelled_percent']
         translate = {'Airline':'airline_name',
                           'Origin (Optional)' : 'reporting_airport',
                           'Origin' : 'reporting_airport',
@@ -99,17 +99,17 @@ class Model:
         temp_df = self.__df.copy()
         if filter:
             for key, val in filter.items():
-                if key != 'Measure for Comparison':
-                    column = translate[key]
-                    if val:
-                        temp_df = temp_df[temp_df[column] == val]
+                column = translate[key]
+                if val:
+                    temp_df = temp_df[temp_df[column] == val]
         return list(temp_df[translate[name]].unique())
 
     def get_graph_data(self, name, options):
         """Get the data depending on the graph's type"""
         translate = {'Corr':self.corr_data,
                      'Pie' : self.pie_chart_data,
-                     'Dist' : self.distribution_data}
+                     'Dist' : self.distribution_data
+                     }
         airline = None
         origin = None
         destination = None
@@ -120,4 +120,14 @@ class Model:
                 origin = val
             elif 'destination' in key.lower():
                 destination = val
+        if 'compare' in options:
+            compare = options['compare']
+            return self.bar_graph_data(airline, compare, origin, destination)
         return translate[name](airline, origin, destination)
+
+if __name__ == '__main__':
+    df = df = pd.read_csv(os.path.join(os.getcwd(),
+                                'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
+    m = Model(df)
+    a = m.bar_graph_data(['WIZZ AIR', 'EASTERN AIRWAYS'], 'average_delay_mins')
+    print(a[0])

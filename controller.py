@@ -1,5 +1,4 @@
-from view import TabManager
-from model import Model
+from tkinter import messagebox
 
 class Controller:
     def __init__(self, view, model):
@@ -54,45 +53,49 @@ class Controller:
         self.selector_selected('Airline')
 
     def add_to_history_box(self, event):
-        graph = self.view.get_current_graph()
-        airline = graph.side_panel.get_selector_options()['Airline']
-        graph.side_panel.history_box.append(airline)
-        graph.side_panel.set_button_state('PLOT', 'normal')
-        graph.side_panel.set_button_state('REMOVE', 'normal')
-        graph.side_panel.set_button_state('ADD', 'disabled')
+        #TODO Add if else
+        panel = self.view.get_current_graph().side_panel
+        airline = panel.get_selector_options()['Airline']
+        if panel.get_button_state('ADD') == 'normal':
+            panel.history_box.append(airline)
+            panel.set_button_state('PLOT', 'normal')
+            panel.set_button_state('REMOVE', 'normal')
+            panel.set_button_state('ADD', 'disabled')
 
     def remove_from_history_box(self, event):
-        graph = self.view.get_current_graph()
-        airline = graph.side_panel.get_selector_options()['Airline']
-        graph.side_panel.history_box.remove(airline)
-        graph.side_panel.set_button_state('ADD', 'normal')
-        graph.side_panel.set_button_state('REMOVE', 'disabled')
-        if not graph.side_panel.history_box.values:
-            graph.side_panel.set_button_state('PLOT', 'disabled')
+        panel = self.view.get_current_graph().side_panel
+        airline = panel.get_selector_options()['Airline']
+        if panel.get_button_state('REMOVE') == 'normal':
+            panel.history_box.remove(airline)
+            panel.set_button_state('ADD', 'normal')
+            panel.set_button_state('REMOVE', 'disabled')
+        if not panel.history_box.values:
+            panel.set_button_state('PLOT', 'disabled')
 
     def activate_plot(self, event):
         try:
             graph = self.view.get_current_graph()
-            graph_name = self.view.get_current_tab_name()
-            options = graph.side_panel.get_selector_options()
-            if graph.side_panel.is_history_box:
-                options['airline'] = graph.history_box.values
-            data, title = self.model.get_graph_data(graph_name, options)
-            graph.plot_graph(data, title)
+            if graph.side_panel.get_button_state('PLOT') == 'normal':
+                graph_name = self.view.get_current_tab_name()
+                options = graph.side_panel.get_selector_options()
+                if graph.side_panel.is_history_box:
+                    options['airline'] = graph.side_panel.history_box.values
+                    options['compare'] = graph_name
+                data, title = self.model.get_graph_data(graph_name, options)
+                graph.plot_graph(data, title)
         except Exception as e:
-            print(e)
+            messagebox.showerror('Error', e)
 
 
     def selector_selected(self, selector_name):
         """Fill the next selector with data after the first one is selected"""
-        if selector_name != 'Measure for Comparison':
-            current_graph = self.view.get_current_graph()
-            next_selector = current_graph.side_panel.get_next_selector(selector_name)
-            if next_selector:
-                current_graph.side_panel.disable_next_selectors(selector_name)
-                filters = current_graph.side_panel.get_selector_options()
-                data = self.model.get_selector_data(next_selector.label, filters)
-                next_selector.val = data
-                if current_graph.side_panel.is_history_box:
-                    current_graph.side_panel.history_box.values = []
-                    self.always_active_selector(current_graph, 'Airline', filters)
+        current_graph = self.view.get_current_graph()
+        next_selector = current_graph.side_panel.get_next_selector(selector_name)
+        if next_selector:
+            current_graph.side_panel.disable_next_selectors(selector_name)
+            filters = current_graph.side_panel.get_selector_options()
+            data = self.model.get_selector_data(next_selector.label, filters)
+            next_selector.val = data
+            if current_graph.side_panel.is_history_box:
+                current_graph.side_panel.history_box.values = []
+                self.always_active_selector(current_graph, 'Airline', filters)
