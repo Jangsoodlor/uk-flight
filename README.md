@@ -5,16 +5,21 @@ A program to compute and show statistics of flight routes from the United Kingdo
 Coming soon
 
 ## How to install.
-0. Have Python install in your PC
-1. Clone this repository or  download as zip file and extract it.
+0. Have Python install on your PC
+1. Clone this repository or download as zip file and extract it.
 2. Install all dependencies required to run the program 
 ```
 pip install -r requirements.txt
 ```
 
+The dataset is already included in `./data` directory.
 
 ## How to run
-Install all the dependencies and run the main.py file
+Install all the dependencies required by the program
+```
+pip install -r requirements.txt
+```
+And run the main.py file
 ```
 python main.py
 ```
