@@ -1,13 +1,15 @@
+"""Contains models of the program"""
 import os
 import pandas as pd
 from numpy import number
 
 class Model:
+    """The model class"""
     def __init__(self, dataframe: pd.DataFrame) -> None:
         self.__df = dataframe
 
     @classmethod
-    def remove_outlier(cls, dataframe, column:list = []) -> pd.DataFrame:
+    def remove_outlier(cls, dataframe, column:list = None) -> pd.DataFrame:
         """A class method to remove outliers"""
         temp_df = dataframe.copy()
         if not column:
@@ -20,6 +22,7 @@ class Model:
 
     @property
     def df(self):
+        """Returns the dataframe"""
         return self.__df
 
     def __filter_origin_destination(self, temp_df:pd.DataFrame, origin:str, destination:str):
@@ -32,26 +35,30 @@ class Model:
 
     def desc_stat_data(self, origin:str):
         """Returns data for Descriptive Statistics"""
-        temp_df =  self.__df[self.__df['reporting_airport'] == origin]
+        temp_df =  self.df[self.df['reporting_airport'] == origin]
         return temp_df['average_delay_mins'].describe()
 
     def corr_data(self, airline:str, origin:str=None, destination:str=None):
         """Returns data for Correlation Plot"""
-        temp_df = self.__df[self.__df['airline_name'] == airline]
+        temp_df = self.df.copy()
+        title = 'Average delay of All Airlines'
+        if airline:
+            temp_df = self.df[self.df['airline_name'] == airline]
+            title = title[:13] + f' of {airline}'
+            if origin:
+                title += f' from {origin}'
+            if destination:
+                title += f' to {destination}'
+
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['average_delay_mins', 'previous_year_month_average_delay']]
-        title = f'Average delay of {airline}'
-        if origin:
-            title += f' from {origin}'
-        if destination:
-            title += f' to {destination}'
         corr = temp_df.corr()['average_delay_mins']['previous_year_month_average_delay']
         coefficient = f'Correlation Coefficient = {corr}'
         return temp_df, (title, coefficient)
 
     def bar_graph_data(self, airlines, compare, origin:str=None, destination:str=None):
         """Returns data for bar graph"""
-        temp_df = self.__df[self.__df['airline_name'].isin(airlines)]
+        temp_df = self.df[self.df['airline_name'].isin(airlines)]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['airline_name', compare]]
         temp_df = temp_df.groupby('airline_name').mean()
@@ -63,7 +70,7 @@ class Model:
         """Returns data for pie chart"""
         if not(airline and origin and destination):
             raise ValueError('Please fill in all fields before plotting')
-        temp_df = self.__df[self.__df['airline_name'] == airline]
+        temp_df = self.df[self.df['airline_name'] == airline]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
         series = temp_df.sum()
@@ -74,7 +81,7 @@ class Model:
         """Returns data for distribution graph"""
         if not(airline and origin and destination):
             raise ValueError('Please fill in all fields')
-        temp_df = self.__df[self.__df['airline_name'] == airline]
+        temp_df = self.df[self.df['airline_name'] == airline]
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         filters = ['flights_more_than_15_minutes_early_percent',
                    'flights_15_minutes_early_to_1_minute_early_percent',
@@ -95,16 +102,17 @@ class Model:
         title = f'Distribution of Delay Intervals of {airline}'
         return temp_df, title
 
-    def get_selector_data(self, name:str, filter:dict=None):
+    def get_selector_data(self, name:str, filters:dict=None):
+        """Get the appropriate data for a selector object"""
         translate = {'Airline':'airline_name',
                           'Origin (Optional)' : 'reporting_airport',
                           'Origin' : 'reporting_airport',
                           'Destination (Optional)' : 'origin_destination',
                           'Destination' : 'origin_destination'}
 
-        temp_df = self.__df.copy()
-        if filter:
-            for key, val in filter.items():
+        temp_df = self.df.copy()
+        if filters:
+            for key, val in filters.items():
                 column = translate[key]
                 if val:
                     temp_df = temp_df[temp_df[column] == val]

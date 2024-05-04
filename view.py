@@ -1,3 +1,4 @@
+"""The Main UI and UI components of uk-flight application"""
 import tkinter as tk
 from tkinter import ttk
 import abc
@@ -8,6 +9,7 @@ import seaborn as sns
 
 
 class TabManager(tk.Tk):
+    """The Main UI of the program"""
     def __init__(self) -> None:
         super().__init__()
         self.title('UK Flight')
@@ -20,6 +22,7 @@ class TabManager(tk.Tk):
         self.init_components()
 
     def init_components(self):
+        """Initialise components"""
         self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
         pack = {'side':'left', 'expand':True, 'fill':'both'}
@@ -50,17 +53,18 @@ class TabManager(tk.Tk):
         """Get the name of the tab that's currently active"""
         return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
 
-    def get_current_graph(self):
+    def get_current_graph(self) -> tk.Frame:
         """Get the graph that's currently displayed"""
         current_tab = self.get_current_tab_name()
         current_graph = self.graph_factory.get_instance(current_tab)
         return current_graph
 
-    def exit(self):
+    def exit(self) -> None:
         """Closes all graphs"""
         plt.close('all')
 
-    def run(self):
+    def run(self) -> None:
+        """Runs the mainloop"""
         self.protocol('WM_DELETE_WINDOW', exit)
         self.mainloop()
 
@@ -92,7 +96,7 @@ class GraphFactory(tk.Frame, abc.ABC):
         self.init_components()
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Get the description of the tab"""
         return self.__description.get()
 
@@ -102,7 +106,7 @@ class GraphFactory(tk.Frame, abc.ABC):
         self.__description.set(text)
 
     def init_components(self):
-        """init components"""
+        """Initialise components"""
         self.side_panel = SidePanel(self)
         self.side_panel.pack(side='right', padx=10)
         self.add_side_panel_elements()
@@ -160,6 +164,7 @@ class PieGraph(GraphFactory):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        """Add side panel elements for the pie graph"""
         self.description = 'See the amount of flights cancelled compared to all flights'
         self.side_panel.create_selector('Origin')
         self.side_panel.create_selector('Destination')
@@ -167,6 +172,7 @@ class PieGraph(GraphFactory):
         self.side_panel.create_button('PLOT')
 
     def plot_graph(self, data,title):
+        """Plots the pie graph"""
         self.ax.clear()
         self.ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
                     labeldistance=1.25, radius = 0.9)
@@ -177,10 +183,12 @@ class PieGraph(GraphFactory):
 
 
 class DistributionGraph(GraphFactory):
+    """A distribution graph tab"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        """Add side panel elements to the distribution graph"""
         self.description = 'See the distribution of delays'
         self.side_panel.create_selector('Origin')
         self.side_panel.create_selector('Destination')
@@ -188,6 +196,7 @@ class DistributionGraph(GraphFactory):
         self.side_panel.create_button('PLOT')
 
     def plot_graph(self, data, title):
+        """Plots the distribution graph"""
         self.ax.clear()
         sns.barplot(x=data['Interval'], y=data['Percent'], ax=self.ax)
         interval_label = [
@@ -208,6 +217,7 @@ class DistributionGraph(GraphFactory):
         self.canvas.draw()
 
 class BarGraph(GraphFactory):
+    """A BarGraph tab"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
 
@@ -230,7 +240,7 @@ class BarGraph(GraphFactory):
 
 
 class SidePanel(tk.Frame):
-    """The side panel"""
+    """The side panel frame"""
     def __init__(self, master=None,cnf={},**kwargs):
         super().__init__(master, cnf, **kwargs)
         self.__selectors = {}
@@ -247,11 +257,13 @@ class SidePanel(tk.Frame):
         selector.pack(self.__padding)
 
     def add_history_box(self):
+        """add historybox object to the side panel"""
         self.history_box = HistoryBox(self)
         self.history_box.pack(self.__padding)
 
     @property
-    def is_history_box(self):
+    def is_history_box(self) -> bool:
+        """Returns True if there's a historybox instance inside, returns false otherwise"""
         return bool(self.history_box)
 
     def get_selector(self, name):
@@ -335,11 +347,14 @@ class SidePanel(tk.Frame):
 
 
 class HistoryBox(tk.Frame):
+    """A frame that consists of a scroll bar and a listbox. It keeps track of
+    what the user has selected from the selector"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.init_components()
 
     def init_components(self):
+        """Initialise components"""
         self.__listbox = tk.Listbox(self)
         label = tk.Label(self, text='Selected Airlines')
         label.pack()
@@ -352,28 +367,34 @@ class HistoryBox(tk.Frame):
         scrollbar.pack(side='right', expand=True, fill='y')
 
     def __update(self):
+        """Update the historybox"""
         self.__listbox['listvariable'] = tk.Variable(value=self.__listbox_val)
 
     @property
     def values(self):
+        """Get the listbox"""
         return self.__listbox_val
 
     @values.setter
     def values(self, lst):
+        """Set the listbox values"""
         self.__listbox_val = lst
         if not lst:
             self.__listbox.selection_clear(0, 'end')
         self.__update()
 
     def append(self, val):
+        """Add new element to the end of the listbox"""
         self.__listbox_val.append(val)
         self.__update()
 
     def remove(self, val):
+        """Removes an element from the listbox"""
         self.__listbox_val.remove(val)
         self.__update()
 
     def bind(self, func, add=None):
+        """Bind the listbox. It'll inject the function with the current selection"""
         try:
             def bind_function(event):
                 cur_sel = self.__listbox.get(self.__listbox.curselection())
@@ -434,6 +455,7 @@ class Selector(tk.Frame):
         self.__combobox_var.set('')
 
     def set_selected(self, val:str):
+        """Set the combobox value"""
         self.__combobox_var.set(val)
 
 if __name__ == '__main__':
