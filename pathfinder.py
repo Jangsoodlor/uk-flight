@@ -96,7 +96,7 @@ class Pathfinder:
         dist = direct_path[0:2]
         return [[start, stop, airline, dist[0], dist[1]]]
 
-    def return_dijkstra(self, start, stop, parent, parent_airline, dist, delay_or_cancel):
+    def return_dijkstra(self, start, stop, parent, parent_airline, delay_or_cancel):
         """Return Dijkstra's Algorithm search results"""
         airline_stop = ''
         stop_list = []
@@ -143,15 +143,5 @@ class Pathfinder:
         parent2, parent_airline2, dist2 = self.dijkstra(self.adj_delay, start, 0)
         # Compares the cancellation rate
         if abs(dist[stop][0] - dist2[stop][0])*100 <= 5:
-            return self.return_dijkstra(start, stop, parent2, parent_airline2, dist2, 'delay')
-        return self.return_dijkstra(start, stop, parent, parent_airline, dist, 'cancel')
-
-if __name__ == '__main__':
-    import os
-    origin = 'ABERDEEN'
-    dest = 'OSLO (GARDERMOEN)'
-    df = pd.read_csv(os.path.join(os.getcwd(),
-                                'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
-    p = Pathfinder(df)
-    a = p.find_flight_path(origin, dest)
-    print(a)
+            return self.return_dijkstra(start, stop, parent2, parent_airline2, 'delay')
+        return self.return_dijkstra(start, stop, parent, parent_airline, 'cancel')

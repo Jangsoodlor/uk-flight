@@ -1,21 +1,21 @@
 """The controller. Which controls interaction between view and model"""
 from tkinter import messagebox
+from pathfinder import Pathfinder
 
 class Controller:
     """The Controller class"""
     def __init__(self, view, model):
         self.view = view
         self.model = model
+        self.pathfinder = None
         self.feed_init_data()
 
     def run(self):
         """Run the app"""
         self.view.run()
 
-    def feed_data(self, graph, name, filters=None):
+    def feed_data(self, selector, filters=None):
         """Set the data of a certain combobox in a specific graph"""
-        panel = graph.side_panel
-        selector =  panel.get_selector(name)
         data = self.model.get_selector_data(selector.label, filters)
         data.sort()
         selector.val = [''] + data
@@ -24,6 +24,7 @@ class Controller:
         """Fill the first selectors of each tab with initial data"""
         self.feed_graphs_init_data()
         self.feed_desc_stat_init_data()
+        self.feed_pathfinder_init_data()
 
     def feed_desc_stat_init_data(self):
         """Fill the data for descriptive statistics combobox"""
@@ -32,6 +33,25 @@ class Controller:
         self.view.desc_stat.val = [''] + data
         self.view.desc_stat.binder(self.insert_desc_stat_text)
 
+    def feed_pathfinder_init_data(self):
+        side_panel = self.view.path_ui.side_panel
+        for selector in side_panel:
+            self.feed_data(selector)
+        side_panel.bind_button('Find Route', self.find_route)
+
+    def find_route(self, event):
+        options = self.view.path_ui.side_panel.get_selector_options()
+        if not self.pathfinder:
+            self.pathfinder = Pathfinder(self.model.df)
+        flights = self.pathfinder.find_flight_path(options['Origin'], options['Destination'])
+        self.view.path_ui.create_subframe(flights)
+    
+    def insert_desc_stat_text(self, airline):
+        """Insert descriptive statistics"""
+        title = f'Average delay of flights departed from {airline} in minutes\n'
+        describe = title + self.model.desc_stat_data(airline)
+        self.view.desc_stat.insert_text(describe)
+
     def feed_graphs_init_data(self):
         """filled the first selector of each graph with initial datas.
         And bind the plot button."""
@@ -39,25 +59,19 @@ class Controller:
         for graph in graphs:
             panel = graph.side_panel
             first_box = panel.first_selector
-            self.feed_data(graph, first_box.label, None)
+            self.feed_data(first_box)
             panel.disable_next_selectors(first_box.label)
             panel.bind_selectors(self.selector_selected)
             panel.bind_button('PLOT', self.activate_plot)
-            if panel.is_history_box:
+            if panel.has_history_box:
                 panel.history_box.binder(self.history_box_selected)
                 panel.bind_button('ADD', self.add_to_history_box)
                 panel.bind_button('REMOVE', self.remove_from_history_box)
                 panel.bind_selector('Airline', self.airlines_selected)
                 panel.set_button_state('PLOT', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
-                self.feed_data(graph, 'Airline')
-                self.feed_data(graph, 'Origin (Optional)')
-
-    def insert_desc_stat_text(self, airline):
-        """Insert descriptive statistics"""
-        title = f'Average delay of flights departed from {airline} in minutes\n'
-        describe = title + self.model.desc_stat_data(airline)
-        self.view.desc_stat.insert_text(describe)
+                self.feed_data(panel.get_selector('Airline'))
+                self.feed_data(panel.get_selector('Origin (Optional)'))
 
     def history_box_selected(self, cur_sel):
         """Enabled a remove button when historybox is selected"""
@@ -106,7 +120,7 @@ class Controller:
             if panel.get_button_state('PLOT') == 'normal':
                 graph_name = self.view.get_current_tab_name()
                 options = panel.get_selector_options()
-                if panel.is_history_box:
+                if panel.has_history_box:
                     options['airline'] = panel.history_box.values
                     options['compare'] = graph_name
                 data, title = self.model.get_graph_data(graph_name, options)
@@ -117,13 +131,12 @@ class Controller:
 
     def selector_selected(self, selector_name):
         """Fill the next selector with data after the first one is selected"""
-        graph = self.view.get_current_graph()
-        panel = graph.side_panel
+        panel = self.view.get_current_graph().side_panel
         next_selector = panel.get_next_selector(selector_name)
         if next_selector:
             panel.disable_next_selectors(selector_name)
             filters = panel.get_selector_options()
-            self.feed_data(graph, next_selector.label, filters)
-            if panel.is_history_box:
+            self.feed_data(next_selector, filters)
+            if panel.has_history_box:
                 panel.history_box.values = []
-                self.feed_data(graph, 'Airline', filters)
+                self.feed_data(panel.get_selector('Airline'), filters)

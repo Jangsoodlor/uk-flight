@@ -4,6 +4,7 @@ from tkinter import ttk
 
 from graphs import GraphFactory
 from descstat import DescStat
+from path_ui import PathUI
 import matplotlib.pyplot as plt
 
 
@@ -12,6 +13,7 @@ class TabManager(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title('UK Flight')
+        self.protocol('WM_DELETE_WINDOW', exit)
         self.graph_factory = GraphFactory
         self.graph_dict = {'Compare Delay with Previous Year':'Corr',
                            'Flights Cancelled vs Overall Flights' : 'Pie',
@@ -25,9 +27,15 @@ class TabManager(tk.Tk):
         pack = {'side':'left', 'expand':True, 'fill':'both'}
         self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
+
         self.desc_stat = DescStat(self)
         self.desc_stat.pack(pack)
         self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
+
+        self.path_ui = PathUI(self)
+        self.path_ui.pack(pack)
+        self.tab_controller.add(self.path_ui, text='Find Flight Path')
+
         for key,val in self.graph_dict.items():
             graph = self.graph_factory.get_instance(val, self)
             graph.pack(pack)
@@ -40,12 +48,7 @@ class TabManager(tk.Tk):
         self.config(menu=menubar)
         help_menu = tk.Menu(menubar)
         menubar.add_cascade(label="Help", menu=help_menu)
-        menubar.add_command(label='Exit', command=self.kill)
-
-    def kill(self):
-        """Kills the process"""
-        self.exit()
-        self.destroy()
+        menubar.add_command(label='Exit', command=self.exit)
 
     def get_all_graphs(self):
         """Get all graphs, use in feed_data"""
@@ -64,10 +67,12 @@ class TabManager(tk.Tk):
     def exit(self) -> None:
         """Closes all graphs"""
         plt.close('all')
+        for widget in self.winfo_children():
+            widget.destroy()
+        self.destroy()
 
     def run(self) -> None:
         """Runs the mainloop"""
-        self.protocol('WM_DELETE_WINDOW', exit)
         self.mainloop()
 
 if __name__ == '__main__':
