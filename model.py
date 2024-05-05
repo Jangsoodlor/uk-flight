@@ -143,7 +143,7 @@ class Model:
         return translate[name](airline, origin, destination)
 
 if __name__ == '__main__':
-    df = df = pd.read_csv(os.path.join(os.getcwd(),
+    df = pd.read_csv(os.path.join(os.getcwd(),
                                 'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
     m = Model(df)
     a = m.desc_stat_data('SOUTHAMPTON')
