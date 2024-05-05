@@ -25,7 +25,7 @@ class SidePanel(tk.Frame):
         self.history_box.pack(self.__padding)
 
     @property
-    def is_history_box(self) -> bool:
+    def has_history_box(self) -> bool:
         """Returns True if there's a historybox instance inside, returns false otherwise"""
         return bool(self.history_box)
 
@@ -38,16 +38,13 @@ class SidePanel(tk.Frame):
     @property
     def first_selector(self):
         """returns the first selector in the side panel"""
-        name = iter(self.__selectors)
-        c = next(name)
-        return self.__selectors[c]
+        selector = self.__iter__()
+        return next(selector)
 
-    def get_next_selector(self, name=None):
+    def get_next_selector(self, name):
         """Returns the selector that is located immediately below the one specified
         Return None if there isn't any"""
         temp_list = list(self.__selectors)
-        if not name:
-            return self.__selectors[temp_list[0]]
         index = temp_list.index(name)+1
         if index < len(temp_list):
             return self.__selectors[temp_list[index]]
@@ -107,6 +104,9 @@ class SidePanel(tk.Frame):
         self.get_selector(name).pack(self.__padding)
         for i in temp_list:
             self.get_selector(i).pack(self.__padding)
+
+    def __iter__(self):
+        return iter(self.__selectors.values())
 
 
 class HistoryBox(tk.Frame):
