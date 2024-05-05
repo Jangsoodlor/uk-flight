@@ -5,7 +5,6 @@ from side_panel import SidePanel
 class PathUI(tk.Frame):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
-        self.subframes = []
         self.init_components()
 
     def init_components(self):
@@ -25,7 +24,12 @@ class PathUI(tk.Frame):
         self.side_panel.create_selector('Destination')
         self.side_panel.create_button('Find Route')
 
-    def create_subframe(self, flights):
+    def clear_subframes(self):
+        for child in self.inner_frame.winfo_children():
+            child.destroy()
+
+    def create_subframes(self, flights):
+        self.clear_subframes()
         titles = ['Origin: ',
                   'Destination: ',
                   'Airline: ',
@@ -37,7 +41,6 @@ class PathUI(tk.Frame):
                 text = titles[i] + str(val)
                 label = tk.Label(frm, text=text)
                 label.pack(anchor='w')
-            self.subframes.append(frm)
             frm.pack(anchor='w', padx=5, pady=10, fill='x', expand=True)
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ class Controller:
         if not self.pathfinder:
             self.pathfinder = Pathfinder(self.model.df)
         flights = self.pathfinder.find_flight_path(options['Origin'], options['Destination'])
-        self.view.path_ui.create_subframe(flights)
+        self.view.path_ui.create_subframes(flights)
     
     def insert_desc_stat_text(self, airline):
         """Insert descriptive statistics"""
