@@ -83,6 +83,9 @@ class SidePanel(tk.Frame):
         """bind a button to a specific function"""
         self.__buttons[name].bind('<Button>', func)
 
+    def hide_button(self, name):
+        self.__buttons[name].pack_forget()
+
     def get_button_state(self, name):
         """Get a state of a button"""
         return self.__buttons[name]['state']
@@ -158,13 +161,12 @@ class HistoryBox(tk.Frame):
 
     def binder(self, func, add=None):
         """Bind the listbox. It'll inject the function with the current selection"""
-        try:
-            def bind_function(event):
-                cur_sel = self.__listbox.get(self.__listbox.curselection())
+        def bind_function(event):
+            sel = self.__listbox.curselection()
+            if sel:
+                cur_sel = self.__listbox.get(sel)
                 func(cur_sel)
-            self.__listbox.bind('<<ListboxSelect>>', bind_function, add)
-        except Exception:
-            pass
+        self.__listbox.bind('<<ListboxSelect>>', bind_function, add)
 
 class Selector(tk.Frame):
     """An object that consists of a label and a combobox"""

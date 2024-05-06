@@ -65,16 +65,17 @@ class Controller:
             self.feed_data(first_box)
             panel.disable_next_selectors(first_box.label)
             panel.bind_selectors(self.selector_selected)
-            panel.bind_button('PLOT', self.activate_plot)
             if panel.has_history_box:
                 panel.history_box.binder(self.history_box_selected)
                 panel.bind_button('ADD', self.add_to_history_box)
                 panel.bind_button('REMOVE', self.remove_from_history_box)
                 panel.bind_selector('Airline', self.airlines_selected)
-                panel.set_button_state('PLOT', 'disabled')
+                # panel.set_button_state('PLOT', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
                 self.feed_data(panel.get_selector('Airline'))
                 self.feed_data(panel.get_selector('Origin (Optional)'))
+            else:
+                panel.bind_button('PLOT', self.activate_plot)
 
     def history_box_selected(self, cur_sel):
         """Enabled a remove button when historybox is selected"""
@@ -100,9 +101,9 @@ class Controller:
         airline = panel.get_selector_options()['Airline']
         if panel.get_button_state('ADD') == 'normal':
             panel.history_box.append(airline)
-            panel.set_button_state('PLOT', 'normal')
             panel.set_button_state('REMOVE', 'normal')
             panel.set_button_state('ADD', 'disabled')
+            self.activate_plot(None)
 
     def remove_from_history_box(self, event):
         """Removing element from historybox"""
@@ -112,8 +113,8 @@ class Controller:
             panel.history_box.remove(airline)
             panel.set_button_state('ADD', 'normal')
             panel.set_button_state('REMOVE', 'disabled')
-        if not panel.history_box.values:
-            panel.set_button_state('PLOT', 'disabled')
+        if panel.history_box.values:
+            self.activate_plot(None)
 
     def activate_plot(self, event):
         """Plot the graph"""
@@ -141,4 +142,6 @@ class Controller:
             self.feed_data(next_selector, filters)
             if panel.has_history_box:
                 panel.history_box.values = []
+                panel.set_button_state('ADD', 'disabled')
+                panel.set_button_state('REMOVE', 'disabled')
                 self.feed_data(panel.get_selector('Airline'), filters)

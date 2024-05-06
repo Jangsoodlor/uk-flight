@@ -28,13 +28,13 @@ class TabManager(tk.Tk):
         self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
 
-        self.desc_stat = DescStat(self)
-        self.desc_stat.pack(pack)
-        self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
-
         self.path_ui = PathUI(self)
         self.path_ui.pack(pack)
         self.tab_controller.add(self.path_ui, text='Find Flight Path')
+
+        self.desc_stat = DescStat(self)
+        self.desc_stat.pack(pack)
+        self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
 
         for key,val in self.graph_dict.items():
             graph = self.graph_factory.get_instance(val, self)

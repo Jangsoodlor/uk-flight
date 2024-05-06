@@ -160,6 +160,7 @@ class BarGraph(GraphFactory):
         super().__init__(master, cnf, **kwargs)
 
     def add_side_panel_elements(self):
+        self.description = 'Compare flaws of various airlines'
         self.side_panel.add_history_box()
         self.side_panel.create_selector('Origin (Optional)')
         self.side_panel.create_selector('Destination (Optional)')
@@ -167,6 +168,7 @@ class BarGraph(GraphFactory):
         self.side_panel.create_button('ADD')
         self.side_panel.create_button('REMOVE')
         self.side_panel.create_button('PLOT')
+        self.side_panel.hide_button('PLOT')
         self.side_panel.set_button_state('REMOVE', 'disabled')
         self.side_panel.set_button_state('ADD', 'disabled')
 
