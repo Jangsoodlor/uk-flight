@@ -94,7 +94,7 @@ class Pathfinder:
         """Return Linear Search Results"""
         airline = direct_path[2]
         dist = direct_path[0:2]
-        return [[start, stop, airline, dist[0], dist[1]]]
+        return [[airline, start, stop, dist[0], dist[1]]]
 
     def return_dijkstra(self, start, stop, parent, parent_airline, delay_or_cancel):
         """Return Dijkstra's Algorithm search results"""
@@ -125,13 +125,17 @@ class Pathfinder:
                 adj = self.adj_cancel[origin][destination]
             cancel = adj[0]
             delay = adj[1]
-            temp_lst = [origin, destination, airline, cancel, delay]
+            temp_lst = [airline, origin, destination, cancel, delay]
             ret_list.append(temp_lst)
 
         return ret_list
 
     def find_flight_path(self, start, stop):
         """Find the flight path from city A to city B"""
+        if not start or not stop:
+            raise ValueError('Please Select Both Origin and Destination')
+        if start == stop:
+            raise ValueError('The Origin airport cannot be the same as the destination')
         direct_path = self.linear_search(self.adj_cancel, start, stop)
         if direct_path:
             direct_path2 = self.linear_search(self.adj_delay, start, stop)

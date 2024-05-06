@@ -40,16 +40,19 @@ class Controller:
         side_panel.bind_button('Find Route', self.find_route)
 
     def find_route(self, event):
-        options = self.view.path_ui.side_panel.get_selector_options()
-        if not self.pathfinder:
-            self.pathfinder = Pathfinder(self.model.df)
-        flights = self.pathfinder.find_flight_path(options['Origin'], options['Destination'])
-        self.view.path_ui.create_subframes(flights)
+        try:
+            options = self.view.path_ui.side_panel.get_selector_options()
+            if not self.pathfinder:
+                self.pathfinder = Pathfinder(self.model.df)
+            flights = self.pathfinder.find_flight_path(options['Origin'], options['Destination'])
+            self.view.path_ui.create_subframes(flights)
+        except ValueError as v:
+            messagebox.showerror('Error', v)
     
     def insert_desc_stat_text(self, airline):
         """Insert descriptive statistics"""
         title = f'Average delay of flights departed from {airline} in minutes\n'
-        describe = title + self.model.desc_stat_data(airline)
+        describe = title + self.model.desc_stat_data(airline)[:-40]
         self.view.desc_stat.insert_text(describe)
 
     def feed_graphs_init_data(self):
@@ -127,7 +130,6 @@ class Controller:
                 graph.plot_graph(data, title)
         except Exception as e:
             messagebox.showerror('Error', e)
-            panel.set_button_state('PLOT', 'normal')
 
     def selector_selected(self, selector_name):
         """Fill the next selector with data after the first one is selected"""

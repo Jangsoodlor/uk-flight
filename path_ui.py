@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
+import os
+from PIL import Image, ImageTk
 from side_panel import SidePanel
 
 class PathUI(tk.Frame):
@@ -15,8 +17,8 @@ class PathUI(tk.Frame):
         self.text = ScrolledText(self, state='disabled', bg=bg)
         self.text.configure(selectbackground=bg,
                             inactiveselectbackground=bg)
-        self.text.pack(fill='both', expand=True, side='left')
-        self.inner_frame = tk.Frame(self.text, bg='#f0f0f0')
+        self.text.pack(fill='both', expand=True, anchor='w')
+        self.inner_frame = tk.Frame(self.text)
         self.text.window_create('1.0', window=self.inner_frame)
 
     def init_side_panel(self):
@@ -30,18 +32,42 @@ class PathUI(tk.Frame):
 
     def create_subframes(self, flights):
         self.clear_subframes()
-        titles = ['Origin: ',
-                  'Destination: ',
-                  'Airline: ',
-                  'Cancellation Rate: ',
-                  'Average Delay (minutes): ']
+
         for flight in flights:
             frm = tk.Frame(self.inner_frame)
-            for i, val in enumerate(flight):
-                text = titles[i] + str(val)
-                label = tk.Label(frm, text=text)
-                label.pack(anchor='w')
-            frm.pack(anchor='w', padx=5, pady=10, fill='x', expand=True)
+            frm_img = tk.Frame(frm)
+            self.__make_logo(frm_img, flight[0])
+            frm_img.pack(side='left', anchor='w', padx=20)
+
+            frm_text = tk.Frame(frm)
+            self.__make_description(frm_text, flight)
+            frm_text.pack(side='right', fill='both', expand=True)
+            frm.pack(anchor='w', pady=10, fill='both', expand=True)
+
+    def __make_logo(self, frm, airline):
+        image_path = os.path.join(os.getcwd(), f'logo/{airline}.png')
+        image = ImageTk.PhotoImage(Image.open(image_path))
+        image_label = tk.Label(frm, image=image)
+        image_label.image = image
+        image_label.pack(side='left', fill='both', expand=True)
+
+    def __make_description(self, frm, flight):
+        titles = ['',
+                  'Origin: ',
+                  'Destination: ',
+                  'Cancellation Rate: ',
+                  'Average Delay: ']
+
+        for i, val in enumerate(flight):
+            text = titles[i] + str(val)
+            if i == 3:
+                text += ' %'
+            elif i == 4:
+                text += ' minutes'
+            label = tk.Label(frm, text=text)
+            if i == 0:
+                label.config(font=('Arial', 15))
+            label.pack(anchor='w')
 
 if __name__ == '__main__':
     import pandas as pd
