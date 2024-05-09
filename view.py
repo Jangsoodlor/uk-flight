@@ -50,8 +50,6 @@ class TabManager(tk.Tk):
         """Creates the menu bar on the top of the screen"""
         menubar = tk.Menu(self)
         self.config(menu=menubar)
-        help_menu = tk.Menu(menubar)
-        menubar.add_cascade(label="Help", menu=help_menu)
         menubar.add_command(label='Exit', command=self.exit)
 
     def get_all_graphs(self):
