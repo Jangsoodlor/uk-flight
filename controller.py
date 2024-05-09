@@ -60,9 +60,8 @@ class Controller:
         self.view.storytelling.plot_graph(datas)
 
     def insert_desc_stat_text(self, airline):
-        """Insert descriptive statistics"""
-        title = f'Average delay of flights departed from {airline} in minutes\n'
-        describe = title + self.model.desc_stat_data(airline)[:-40]
+        """Insert to the textbox"""
+        describe = self.model.desc_stat_data(airline)
         self.view.desc_stat.insert_text(describe)
 
     def feed_graphs_init_data(self):
@@ -99,11 +98,14 @@ class Controller:
         panel = self.view.get_current_graph().side_panel
         panel.set_button_state('REMOVE', 'disabled')
         airline = panel.get_selector_options()['Airline']
-        if airline in panel.history_box.values:
-            panel.set_button_state('REMOVE', 'normal')
+        if airline:
+            if airline in panel.history_box.values:
+                panel.set_button_state('REMOVE', 'normal')
+            else:
+                panel.set_button_state('ADD', 'normal')
+            self.selector_selected('Airline')
         else:
-            panel.set_button_state('ADD', 'normal')
-        self.selector_selected('Airline')
+            panel.set_button_state('ADD', 'disabled')
 
     def add_to_history_box(self, event):
         """Add element to historybox"""

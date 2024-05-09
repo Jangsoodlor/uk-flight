@@ -38,8 +38,11 @@ class Model:
         """Returns data for Descriptive Statistics"""
         temp_df = self.df.copy()
         if origin:
+            title = f'Average delay of flights departed from {origin} (minutes)\n'
             temp_df =  temp_df[temp_df['reporting_airport'] == origin]
-        return str(temp_df['average_delay_mins'].describe())
+        else:
+            title = 'Average delay of all Flights (minutes)\n'            
+        return title + str(temp_df['average_delay_mins'].describe())[:-41]
 
     def corr_data(self, airline:str='', origin:str='', destination:str=''):
         """Returns data for Correlation Plot"""
@@ -56,7 +59,7 @@ class Model:
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['average_delay_mins', 'previous_year_month_average_delay']]
         corr = temp_df.corr()['average_delay_mins']['previous_year_month_average_delay']
-        coefficient = f'\nr = {corr}'
+        coefficient = f'\nCorrelation Coefficient = {corr:.4f}'
         return temp_df, title+coefficient
 
     def bar_graph_data(self, airlines:list, compare, origin:str='', destination:str=''):
@@ -108,7 +111,7 @@ class Model:
         temp_df = temp_df.loc[1:9]
         temp_df.columns = ['Interval', 'Percent']
         temp_df.groupby('Interval')
-        title = f'Distribution of Delay Intervals of {airline}'
+        title = f'Histogram of Delays of {airline}'
         return temp_df, title
 
     def __busiest_flight_route(self):
@@ -133,17 +136,19 @@ class Model:
         hist, hist_title = self.distribution_data(df2['airline_name'],
                                       df2['reporting_airport'],
                                       df2['origin_destination'])
-        hist_title = 'Delay of the most frequent flight'
+        hist_title = 'Delay of the most Frequent Flight Route'
         df3 = self.__busiest_airlines()
         cancel, cancel_title = self.bar_graph_data(airlines=df3, compare='flights_cancelled_percent')
         delay, delay_title = self.bar_graph_data(airlines=df3, compare='average_delay_mins')
+        cancel_title = 'Cancellation Rate of\ntop 3 airlines with the most flights'
+        delay_title = 'Delays of top 3 airlines\nwith the most flights'
 
         return [[pie, pie_title] ,
                 [corr, corr_title],
                 [box, box_title],
                 [hist, hist_title],
                 [cancel, cancel_title],
-                [delay, delay_title]]
+                [delay, delay_title]], self.desc_stat_data()
 
     def get_selector_data(self, name:str, filters:dict=None):
         """Get the appropriate data for a selector object"""
@@ -189,4 +194,6 @@ if __name__ == '__main__':
                                 'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
 
     m = Model(df)
-    m.data_storytelling()
+    a = m.desc_stat_data()[:-41]
+    b = a.split('\n')
+    print(b)

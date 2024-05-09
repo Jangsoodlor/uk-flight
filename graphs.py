@@ -179,6 +179,11 @@ class BarGraph(GraphFactory):
         self.ax.clear()
         sns.barplot(x=data[0], y=data[1], ax=self.ax)
         self.ax.set_title(title)
+        self.ax.set_xlabel('Airlines')
+        if 'average_delay_mins' in title:
+            self.ax.set_ylabel('Average Delay (minutes)')
+        else:
+            self.ax.set_ylabel('Percentage')
         self.canvas.draw()
 
 class Storytelling(tk.Frame):
@@ -191,22 +196,31 @@ class Storytelling(tk.Frame):
         self.fig, self.ax = plt.subplots(2,3,layout='constrained')
         self.canvas = FigureCanvasTkAgg(figure=self.fig, master=self)
         self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
-        label_frame = tk.Frame(self)
-        label_frame.pack(side='right', fill='both')
-        label1 = tk.Label(label_frame, text='Descriptive Statistics of an entire graph')
-        label1.pack(fill='y', anchor='w', padx=5)
+        self.label_frame = tk.Frame(self)
+        self.label_frame.pack(side='right', fill='both', expand=True)
 
     def plot_graph(self, datas):
-        methods = [self.__plot_pie,
-                   self.__plot_corr,
-                   self.__plot_box,
-                   self.__plot_hist,
-                   self.__plot_bar,
-                   self.__plot_bar]
+        if not self.plotted:
+            methods = [self.__plot_pie,
+                    self.__plot_corr,
+                    self.__plot_box,
+                    self.__plot_hist,
+                    self.__plot_bar,
+                    self.__plot_bar]
 
-        for ax, data, method in zip(self.ax.ravel(), datas, methods):
-            method(ax, data[0], data[1])
-        self.canvas.draw()
+            for ax, data, method in zip(self.ax.ravel(), datas[0], methods):
+                graph_data = data[0]
+                title = data[1]
+                method(ax, graph_data, title)
+            self.canvas.draw()
+            self.__create_desc_stat_labels(datas[1])
+            self.plotted = True
+
+    def __create_desc_stat_labels(self, data):
+        for i in data.split('\n'):
+            label = tk.Label(self.label_frame, text=i)
+            label.pack(anchor='w', padx=10, pady=5)
+
 
     def __plot_pie(self, ax, data, title):
         ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
@@ -219,8 +233,8 @@ class Storytelling(tk.Frame):
         sns.scatterplot(x="average_delay_mins",
                         y="previous_year_month_average_delay",
                         data=data, ax=ax)
-        ax.set_xlabel("Average Delay in January 2024 (minutes)")
-        ax.set_ylabel("Average Delay in January 2023 (minutes)")
+        ax.set_xlabel("Delays in January 2024 (minutes)")
+        ax.set_ylabel("Delays in January 2023 (minutes)")
         ax.set_title(title)
 
     def __plot_box(self, ax, data, title):
@@ -228,7 +242,7 @@ class Storytelling(tk.Frame):
         ax.set_title(title)
 
     def __plot_hist(self, ax, data, title):
-        bar = sns.barplot(x=data['Interval'], y=data['Percent'], ax=ax)
+        sns.barplot(x=data['Interval'], y=data['Percent'], ax=ax)
         interval_label = [
             '< -15',
             '[-15,1]',
@@ -247,5 +261,11 @@ class Storytelling(tk.Frame):
         ax.tick_params(axis='x', labelrotation=45)
 
     def __plot_bar(self, ax, data, title):
-        sns.barplot(x=data[0], y=data[1], ax=ax)
+        bar = sns.barplot(x=data[0], y=data[1], ax=ax)
+        for item in bar.get_xticklabels():
+            item.set_rotation(20)
+        if 'Delays' in title:
+            ax.set_ylabel('Average Delay (minutes)')
+        else:
+            ax.set_ylabel('Percentage')
         ax.set_title(title)
