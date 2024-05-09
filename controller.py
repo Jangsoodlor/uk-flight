@@ -22,9 +22,14 @@ class Controller:
 
     def feed_init_data(self):
         """Fill the first selectors of each tab with initial data"""
+        self.view.bind_tab_selected(self.tab_selected)
         self.feed_graphs_init_data()
         self.feed_desc_stat_init_data()
         self.feed_pathfinder_init_data()
+
+    def tab_selected(self, name):
+        if name == 'Data Storytelling':
+            self.display_storytelling()
 
     def feed_desc_stat_init_data(self):
         """Fill the data for descriptive statistics combobox"""
@@ -48,7 +53,12 @@ class Controller:
             self.view.path_ui.create_subframes(flights)
         except ValueError as v:
             messagebox.showerror('Error', v)
-    
+
+    def display_storytelling(self):
+        """Displays the story telling tab"""
+        datas = self.model.data_storytelling()
+        self.view.storytelling.plot_graph(datas)
+
     def insert_desc_stat_text(self, airline):
         """Insert descriptive statistics"""
         title = f'Average delay of flights departed from {airline} in minutes\n'

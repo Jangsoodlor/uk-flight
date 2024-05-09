@@ -69,6 +69,10 @@ class GraphFactory(tk.Frame, abc.ABC):
         """An abstract method to plot the graphs"""
         raise NotImplementedError('Abstract Method')
 
+    # @abc.abstractmethod
+    # def make_random_options(self):
+    #     raise NotImplementedError('Abstract Method')
+
 
 class CorrGraph(GraphFactory):
     """A Correlation Graph tab"""
@@ -89,10 +93,9 @@ class CorrGraph(GraphFactory):
         sns.scatterplot(x="average_delay_mins",
                         y="previous_year_month_average_delay",
                         data=data, ax=self.ax)
-        self.description = title[0]
         self.ax.set_xlabel("Average Delay in January 2024 (minutes)")
         self.ax.set_ylabel("Average Delay in January 2023 (minutes)")
-        self.ax.set_title(title[1])
+        self.ax.set_title(title)
         self.canvas.draw()
 
 
@@ -177,3 +180,72 @@ class BarGraph(GraphFactory):
         sns.barplot(x=data[0], y=data[1], ax=self.ax)
         self.ax.set_title(title)
         self.canvas.draw()
+
+class Storytelling(tk.Frame):
+    def __init__(self, master=None, cnf={}, **kwargs):
+        super().__init__(master, cnf, **kwargs)
+        self.plotted = False
+        self.init_components()
+
+    def init_components(self):
+        self.fig, self.ax = plt.subplots(2,3,layout='constrained')
+        self.canvas = FigureCanvasTkAgg(figure=self.fig, master=self)
+        self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
+        label_frame = tk.Frame(self)
+        label_frame.pack(side='right', fill='both')
+        label1 = tk.Label(label_frame, text='Descriptive Statistics of an entire graph')
+        label1.pack(fill='y', anchor='w', padx=5)
+
+    def plot_graph(self, datas):
+        methods = [self.__plot_pie,
+                   self.__plot_corr,
+                   self.__plot_box,
+                   self.__plot_hist,
+                   self.__plot_bar,
+                   self.__plot_bar]
+
+        for ax, data, method in zip(self.ax.ravel(), datas, methods):
+            method(ax, data[0], data[1])
+        self.canvas.draw()
+
+    def __plot_pie(self, ax, data, title):
+        ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
+                    labeldistance=1.25, radius = 0.9)
+        ax.set_title(title)
+        ax.legend(['Flights not Cancelled', 'Flights Cancelled'])
+        ax.set_title(title)
+
+    def __plot_corr(self, ax, data, title):
+        sns.scatterplot(x="average_delay_mins",
+                        y="previous_year_month_average_delay",
+                        data=data, ax=ax)
+        ax.set_xlabel("Average Delay in January 2024 (minutes)")
+        ax.set_ylabel("Average Delay in January 2023 (minutes)")
+        ax.set_title(title)
+
+    def __plot_box(self, ax, data, title):
+        sns.boxplot(data=data, ax=ax)
+        ax.set_title(title)
+
+    def __plot_hist(self, ax, data, title):
+        bar = sns.barplot(x=data['Interval'], y=data['Percent'], ax=ax)
+        interval_label = [
+            '< -15',
+            '[-15,1]',
+            '[0,15]',
+            '[16,30]',
+            '[31,60]',
+            '[61,120]',
+            '[121,180]',
+            '[181,360]',
+            '> 360',
+        ]
+        ax.set_xticks([i for i in range(9)])
+        ax.set_xticklabels(interval_label)
+        ax.set_xlabel('Delay Interval (minutes)')
+        ax.set_title(title)
+        ax.tick_params(axis='x', labelrotation=45)
+
+    def __plot_bar(self, ax, data, title):
+        sns.barplot(x=data[0], y=data[1], ax=ax)
+        ax.set_title(title)

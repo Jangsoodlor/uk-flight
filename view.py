@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from graphs import GraphFactory
+from graphs import GraphFactory, Storytelling
 from descstat import DescStat
 from path_ui import PathUI
 import matplotlib.pyplot as plt
@@ -32,6 +32,10 @@ class TabManager(tk.Tk):
         self.path_ui.pack(pack)
         self.tab_controller.add(self.path_ui, text='Find Flight Path')
 
+        self.storytelling = Storytelling(self)
+        self.storytelling.pack(pack)
+        self.tab_controller.add(self.storytelling, text='Data Storytelling')
+
         self.desc_stat = DescStat(self)
         self.desc_stat.pack(pack)
         self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
@@ -56,7 +60,10 @@ class TabManager(tk.Tk):
 
     def get_current_tab_name(self) -> str:
         """Get the name of the tab that's currently active"""
-        return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
+        try:
+            return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
+        except KeyError:
+            return self.tab_controller.tab(self.tab_controller.select(), "text")
 
     def get_current_graph(self) -> tk.Frame:
         """Get the graph that's currently displayed"""
@@ -74,6 +81,12 @@ class TabManager(tk.Tk):
     def run(self) -> None:
         """Runs the mainloop"""
         self.mainloop()
+
+    def bind_tab_selected(self, func, add=None):
+        """Binds action when a tab is selected"""
+        def bind_function(event):
+            func(self.get_current_tab_name())
+        self.tab_controller.bind("<<NotebookTabChanged>>", bind_function, add)
 
 if __name__ == '__main__':
     root = tk.Tk()

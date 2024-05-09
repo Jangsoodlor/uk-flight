@@ -34,12 +34,14 @@ class Model:
             temp_df = temp_df[temp_df['origin_destination'] == destination]
         return temp_df
 
-    def desc_stat_data(self, origin:str):
+    def desc_stat_data(self, origin:str=''):
         """Returns data for Descriptive Statistics"""
-        temp_df =  self.df[self.df['reporting_airport'] == origin]
+        temp_df = self.df.copy()
+        if origin:
+            temp_df =  temp_df[temp_df['reporting_airport'] == origin]
         return str(temp_df['average_delay_mins'].describe())
 
-    def corr_data(self, airline:str, origin:str=None, destination:str=None):
+    def corr_data(self, airline:str='', origin:str='', destination:str=''):
         """Returns data for Correlation Plot"""
         temp_df = self.df.copy()
         title = 'Average delay of All Airlines'
@@ -54,10 +56,10 @@ class Model:
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['average_delay_mins', 'previous_year_month_average_delay']]
         corr = temp_df.corr()['average_delay_mins']['previous_year_month_average_delay']
-        coefficient = f'Correlation Coefficient = {corr}'
-        return temp_df, (title, coefficient)
+        coefficient = f'\nr = {corr}'
+        return temp_df, title+coefficient
 
-    def bar_graph_data(self, airlines, compare, origin:str=None, destination:str=None):
+    def bar_graph_data(self, airlines:list, compare, origin:str='', destination:str=''):
         """Returns data for bar graph"""
         if not airlines:
             raise ValueError('Please select at least 1 airline')
@@ -69,16 +71,20 @@ class Model:
         title = f'Comparing {compare}'
         return (temp_df.iloc[:,0], temp_df.iloc[:,1]), title
 
-    def pie_chart_data(self, airline:str, origin:str=None, destination:str=None):
+    def pie_chart_data(self, airline:str='', origin:str='', destination:str=''):
         """Returns data for pie chart"""
-        if not(airline and origin and destination):
-            raise ValueError('Please fill in all fields before plotting')
-        temp_df = self.df[self.df['airline_name'] == airline]
+        temp_df = self.df.copy()
+        title = 'Flights cancellation rate'
+        if airline:
+            temp_df = self.df[self.df['airline_name'] == airline]
+            title += f' of {airline}'
+        if origin:
+            title+= f' from {origin}'
+        if destination:
+            title += f' to {destination}'
         temp_df = self.__filter_origin_destination(temp_df, origin, destination)
         temp_df = temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
-        series = temp_df.sum()
-        title = f'Flights cancellation of {airline} from {origin} to {destination}'
-        return series, title
+        return temp_df.sum(), title
 
     def distribution_data(self, airline:str, origin:str, destination:str):
         """Returns data for distribution graph"""
@@ -104,6 +110,40 @@ class Model:
         temp_df.groupby('Interval')
         title = f'Distribution of Delay Intervals of {airline}'
         return temp_df, title
+
+    def __busiest_flight_route(self):
+        """Returns the busiest flight routes"""
+        df2 = self.df.sort_values(by='number_flights_matched', ascending=False)
+        df2.reset_index(inplace=True)
+        return df2.loc[0, :]
+
+    def __busiest_airlines(self) -> str:
+        """returns top 3 airlines by number of flights"""
+        airlines = self.df.groupby('airline_name')['number_flights_matched'].sum()
+        airlines.sort_index(ascending=False, inplace=True)
+        return list(airlines.index[0:3])
+
+    def data_storytelling(self):
+        """Returns graphs for data storytelling tab"""
+        pie, pie_title = self.pie_chart_data()
+        corr, corr_title = self.corr_data()
+        box = Model.remove_outlier(self.df)['average_delay_mins']
+        box_title = 'Average Delays of all Flights'
+        df2 = self.__busiest_flight_route()
+        hist, hist_title = self.distribution_data(df2['airline_name'],
+                                      df2['reporting_airport'],
+                                      df2['origin_destination'])
+        hist_title = 'Delay of the most frequent flight'
+        df3 = self.__busiest_airlines()
+        cancel, cancel_title = self.bar_graph_data(airlines=df3, compare='flights_cancelled_percent')
+        delay, delay_title = self.bar_graph_data(airlines=df3, compare='average_delay_mins')
+
+        return [[pie, pie_title] ,
+                [corr, corr_title],
+                [box, box_title],
+                [hist, hist_title],
+                [cancel, cancel_title],
+                [delay, delay_title]]
 
     def get_selector_data(self, name:str, filters:dict=None):
         """Get the appropriate data for a selector object"""
@@ -143,8 +183,10 @@ class Model:
         return translate[name](airline, origin, destination)
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     df = pd.read_csv(os.path.join(os.getcwd(),
                                 'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
+
     m = Model(df)
-    a = m.desc_stat_data('SOUTHAMPTON')
-    print(str(a))
+    m.data_storytelling()
