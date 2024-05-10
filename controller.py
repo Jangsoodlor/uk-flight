@@ -27,24 +27,27 @@ class Controller:
         self.feed_desc_stat_init_data()
         self.feed_pathfinder_init_data()
 
-    def tab_selected(self, name):
-        if name == 'Data Storytelling':
-            self.display_storytelling()
-
     def feed_desc_stat_init_data(self):
         """Fill the data for descriptive statistics combobox"""
         data = data = self.model.get_selector_data('Origin', None)
         data.sort()
         self.view.desc_stat.val = [''] + data
         self.view.desc_stat.binder(self.insert_desc_stat_text)
+    
+    def insert_desc_stat_text(self, airline=''):
+        """Insert to the textbox"""
+        describe = self.model.desc_stat_data(airline)
+        self.view.desc_stat.insert_text(describe)
 
     def feed_pathfinder_init_data(self):
+        """Fill the data for 'find flight route' tab."""
         side_panel = self.view.path_ui.side_panel
         for selector in side_panel:
             self.feed_data(selector)
         side_panel.bind_button('Find Route', self.find_route)
 
     def find_route(self, event):
+        """Find a flight route from airport A to airport B"""
         try:
             options = self.view.path_ui.side_panel.get_selector_options()
             if not self.pathfinder:
@@ -53,16 +56,6 @@ class Controller:
             self.view.path_ui.create_subframes(flights)
         except ValueError as v:
             messagebox.showerror('Error', v)
-
-    def display_storytelling(self):
-        """Displays the story telling tab"""
-        datas = self.model.data_storytelling()
-        self.view.storytelling.plot_graph(datas)
-
-    def insert_desc_stat_text(self, airline):
-        """Insert to the textbox"""
-        describe = self.model.desc_stat_data(airline)
-        self.view.desc_stat.insert_text(describe)
 
     def feed_graphs_init_data(self):
         """filled the first selector of each graph with initial datas.
@@ -79,7 +72,6 @@ class Controller:
                 panel.bind_button('ADD', self.add_to_history_box)
                 panel.bind_button('REMOVE', self.remove_from_history_box)
                 panel.bind_selector('Airline', self.airlines_selected)
-                # panel.set_button_state('PLOT', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
                 self.feed_data(panel.get_selector('Airline'))
                 self.feed_data(panel.get_selector('Origin (Optional)'))
@@ -126,7 +118,10 @@ class Controller:
             panel.set_button_state('ADD', 'normal')
             panel.set_button_state('REMOVE', 'disabled')
         if panel.history_box.values:
-            self.activate_plot(None)
+            self.activate_plot('')
+        else:
+            self.view.get_current_graph().ax.clear()
+            self.view.get_current_graph().canvas.draw()
 
     def activate_plot(self, event):
         """Plot the graph"""
@@ -157,3 +152,47 @@ class Controller:
                 panel.set_button_state('ADD', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
                 self.feed_data(panel.get_selector('Airline'), filters)
+
+    def tab_selected(self, name):
+        """Display Default View when tab is selected"""
+        if name == 'Data Storytelling':
+            self.display_storytelling()
+
+        elif name == 'Descriptive Statistics':
+            if not self.view.desc_stat.initialised:
+                self.insert_desc_stat_text()
+
+        elif name in ['Corr', 'Pie']:
+            if not self.view.get_current_graph().initialised:
+                self.view.get_current_graph().initialised = True
+                self.activate_plot('init')
+
+        elif name in ['average_delay_mins', 'flights_cancelled_percent']:
+            self.bar_default_view(name)
+
+        elif name == 'Dist':
+            self.dist_default_view()
+
+    def display_storytelling(self):
+        """Displays the story telling tab"""
+        datas = self.model.data_storytelling()
+        self.view.storytelling.plot_graph(datas)
+
+    def dist_default_view(self):
+        graph = self.view.get_current_graph()
+        panel = graph.side_panel
+        if not graph.initialised:
+            data, title, options = self.model.distribution_demo_data()
+            for option, selector in zip(options, panel):
+                selector.set_selected(option)
+                self.selector_selected(selector.label)
+            graph.plot_graph(data, title)
+
+
+    def bar_default_view(self, name):
+        graph = self.view.get_current_graph()
+        if not graph.initialised:
+            graph.initialised = True
+            data, title, airlines = self.model.bar_graph_demo_data(name)
+            graph.side_panel.history_box.values = airlines
+            graph.plot_graph(data, title)

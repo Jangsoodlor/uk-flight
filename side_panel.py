@@ -38,7 +38,7 @@ class SidePanel(tk.Frame):
     @property
     def first_selector(self):
         """returns the first selector in the side panel"""
-        selector = self.__iter__()
+        selector = iter(self)
         return next(selector)
 
     def get_next_selector(self, name):
@@ -214,11 +214,11 @@ class Selector(tk.Frame):
 
     @val.setter
     def val(self, val:list) -> None:
-        """Set combobox value"""
+        """Set combobox values"""
         self.__combobox['values'] = val
         self.__combobox['state'] = 'readonly'
         self.__combobox_var.set('')
 
     def set_selected(self, val:str):
-        """Set the combobox value"""
+        """Set the combobox's current value"""
         self.__combobox_var.set(val)

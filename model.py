@@ -26,7 +26,7 @@ class Model:
         """Returns the dataframe"""
         return self.__df
 
-    def __filter_origin_destination(self, temp_df:pd.DataFrame, origin:str, destination:str):
+    def __filter_origin_destination(self, temp_df: pd.DataFrame, origin: str, destination: str):
         """Filters the origin and destination of a flight"""
         if origin:
             temp_df = temp_df[temp_df['reporting_airport'] == origin]
@@ -34,17 +34,17 @@ class Model:
             temp_df = temp_df[temp_df['origin_destination'] == destination]
         return temp_df
 
-    def desc_stat_data(self, origin:str=''):
+    def desc_stat_data(self, origin: str=''):
         """Returns data for Descriptive Statistics"""
         temp_df = self.df.copy()
         if origin:
             title = f'Average delay of flights departed from {origin} (minutes)\n'
             temp_df =  temp_df[temp_df['reporting_airport'] == origin]
         else:
-            title = 'Average delay of all Flights (minutes)\n'            
+            title = 'Average delay of all Flights (minutes)\n'
         return title + str(temp_df['average_delay_mins'].describe())[:-41]
 
-    def corr_data(self, airline:str='', origin:str='', destination:str=''):
+    def corr_data(self, airline: str='', origin: str='', destination: str=''):
         """Returns data for Correlation Plot"""
         temp_df = self.df.copy()
         title = 'Average delay of All Airlines'
@@ -62,7 +62,7 @@ class Model:
         coefficient = f'\nCorrelation Coefficient = {corr:.4f}'
         return temp_df, title+coefficient
 
-    def bar_graph_data(self, airlines:list, compare, origin:str='', destination:str=''):
+    def bar_graph_data(self, airlines: list, compare, origin: str='', destination: str=''):
         """Returns data for bar graph"""
         if not airlines:
             raise ValueError('Please select at least 1 airline')
@@ -74,7 +74,7 @@ class Model:
         title = f'Comparing {compare}'
         return (temp_df.iloc[:,0], temp_df.iloc[:,1]), title
 
-    def pie_chart_data(self, airline:str='', origin:str='', destination:str=''):
+    def pie_chart_data(self, airline: str='', origin: str='', destination: str=''):
         """Returns data for pie chart"""
         temp_df = self.df.copy()
         title = 'Flights cancellation rate'
@@ -90,7 +90,7 @@ class Model:
         return temp_df.sum(), title
 
     def distribution_data(self, airline:str, origin:str, destination:str):
-        """Returns data for distribution graph"""
+        """Returns data for distribution graph (histogram)"""
         if not(airline and origin and destination):
             raise ValueError('Please fill in all fields')
         temp_df = self.df[self.df['airline_name'] == airline]
@@ -111,7 +111,7 @@ class Model:
         temp_df = temp_df.loc[1:9]
         temp_df.columns = ['Interval', 'Percent']
         temp_df.groupby('Interval')
-        title = f'Histogram of Delays of {airline}'
+        title = f'Delays of {airline} from {origin} to {destination}'
         return temp_df, title
 
     def __busiest_flight_route(self):
@@ -126,24 +126,35 @@ class Model:
         airlines.sort_index(ascending=False, inplace=True)
         return list(airlines.index[0:3])
 
+    def distribution_demo_data(self):
+        """Returns demo data for distribution graph"""
+        df2 = self.__busiest_flight_route()
+        airline = df2['airline_name']
+        origin = df2['reporting_airport']
+        destination = df2['origin_destination']
+        hist, hist_title = self.distribution_data(airline, origin, destination)
+        return hist, hist_title, [origin, destination, airline]
+
+    def bar_graph_demo_data(self, compare: str):
+        """Returns demo data for bar graph"""
+        airlines = self.__busiest_airlines()
+        data, title = self.bar_graph_data(airlines=airlines, compare=compare)
+        return data, title, airlines
+
     def data_storytelling(self):
         """Returns graphs for data storytelling tab"""
         pie, pie_title = self.pie_chart_data()
         corr, corr_title = self.corr_data()
         box = Model.remove_outlier(self.df)['average_delay_mins']
         box_title = 'Average Delays of all Flights'
-        df2 = self.__busiest_flight_route()
-        hist, hist_title = self.distribution_data(df2['airline_name'],
-                                      df2['reporting_airport'],
-                                      df2['origin_destination'])
+        hist = self.distribution_demo_data()[0]
         hist_title = 'Delay of the most Frequent Flight Route'
-        df3 = self.__busiest_airlines()
-        cancel, cancel_title = self.bar_graph_data(airlines=df3, compare='flights_cancelled_percent')
-        delay, delay_title = self.bar_graph_data(airlines=df3, compare='average_delay_mins')
+        cancel = self.bar_graph_demo_data('flights_cancelled_percent')[0]
         cancel_title = 'Cancellation Rate of\ntop 3 airlines with the most flights'
+        delay = self.bar_graph_demo_data('average_delay_mins')[0]
         delay_title = 'Delays of top 3 airlines\nwith the most flights'
 
-        return [[pie, pie_title] ,
+        return [[pie, pie_title],
                 [corr, corr_title],
                 [box, box_title],
                 [hist, hist_title],
@@ -170,8 +181,7 @@ class Model:
         """Get the data depending on the graph's type"""
         translate = {'Corr':self.corr_data,
                      'Pie' : self.pie_chart_data,
-                     'Dist' : self.distribution_data
-                     }
+                     'Dist' : self.distribution_data}
         airline = None
         origin = None
         destination = None
@@ -186,14 +196,3 @@ class Model:
             compare = options['compare']
             return self.bar_graph_data(airline, compare, origin, destination)
         return translate[name](airline, origin, destination)
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    df = pd.read_csv(os.path.join(os.getcwd(),
-                                'data/202401_Punctuality_Statistics_Full_Analysis.csv'))
-
-    m = Model(df)
-    a = m.desc_stat_data()[:-41]
-    b = a.split('\n')
-    print(b)

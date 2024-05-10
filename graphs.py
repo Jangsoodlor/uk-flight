@@ -33,6 +33,7 @@ class GraphFactory(tk.Frame, abc.ABC):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.__description = tk.StringVar()
+        self.initialised = False
         self.init_components()
 
     @property
@@ -70,10 +71,6 @@ class GraphFactory(tk.Frame, abc.ABC):
     def plot_graph(self, data, title):
         """An abstract method to plot the graphs"""
         raise NotImplementedError('Abstract Method')
-
-    # @abc.abstractmethod
-    # def make_random_options(self):
-    #     raise NotImplementedError('Abstract Method')
 
 
 class CorrGraph(GraphFactory):

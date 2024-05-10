@@ -8,6 +8,7 @@ class DescStat(tk.Frame):
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.__combobox_var = tk.StringVar()
+        self.initialised = False
         self.init_components()
 
     def init_components(self):
