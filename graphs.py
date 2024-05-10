@@ -2,9 +2,11 @@
 import tkinter as tk
 import abc
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+                                               NavigationToolbar2Tk)
 import seaborn as sns
 from side_panel import SidePanel
+
 
 class GraphFactory(tk.Frame, abc.ABC):
     """A Factory of various types of Tabs that has a Graph
@@ -17,10 +19,10 @@ class GraphFactory(tk.Frame, abc.ABC):
         """Gets graph instance"""
         if name not in cls.instances:
             factories = {'Corr': CorrGraph,
-                         'Pie' : PieGraph,
-                         'Dist' : DistributionGraph,
-                         'average_delay_mins' : BarGraph,
-                         'flights_cancelled_percent' : BarGraph}
+                         'Pie': PieGraph,
+                         'Dist': DistributionGraph,
+                         'average_delay_mins': BarGraph,
+                         'flights_cancelled_percent': BarGraph}
             if name not in factories:
                 raise ValueError('Invalid graph')
             if master is None:
@@ -39,7 +41,7 @@ class GraphFactory(tk.Frame, abc.ABC):
         return self.__description.get()
 
     @description.setter
-    def description(self, text:str):
+    def description(self, text: str):
         """Set the description of the tab"""
         self.__description.set(text)
 
@@ -76,9 +78,6 @@ class GraphFactory(tk.Frame, abc.ABC):
 
 class CorrGraph(GraphFactory):
     """A Correlation Graph tab"""
-    def __init__(self, master=None, cnf={}, **kwargs):
-        super().__init__(master, cnf, **kwargs)
-
     def add_side_panel_elements(self):
         """Add side panel elements for correlation graph"""
         self.description = 'See correlation of average delay of airlines'
@@ -101,9 +100,6 @@ class CorrGraph(GraphFactory):
 
 class PieGraph(GraphFactory):
     """A Pie Graph Tab"""
-    def __init__(self, master=None, cnf={}, **kwargs):
-        super().__init__(master, cnf, **kwargs)
-
     def add_side_panel_elements(self):
         """Add side panel elements for the pie graph"""
         self.description = 'See the amount of flights cancelled compared to all flights'
@@ -112,11 +108,11 @@ class PieGraph(GraphFactory):
         self.side_panel.create_selector('Airline')
         self.side_panel.create_button('PLOT')
 
-    def plot_graph(self, data,title):
+    def plot_graph(self, data, title):
         """Plots the pie graph"""
         self.ax.clear()
-        self.ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
-                    labeldistance=1.25, radius = 0.9)
+        self.ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%',
+                    pctdistance=1.15, labeldistance=1.25, radius=0.9)
         self.ax.set_title(title)
         self.ax.legend(['Flights not Cancelled', 'Flights Cancelled'])
         self.ax.set_title(title)
@@ -125,9 +121,6 @@ class PieGraph(GraphFactory):
 
 class DistributionGraph(GraphFactory):
     """A distribution graph tab"""
-    def __init__(self, master=None, cnf={}, **kwargs):
-        super().__init__(master, cnf, **kwargs)
-
     def add_side_panel_elements(self):
         """Add side panel elements to the distribution graph"""
         self.description = 'See the distribution of delays'
@@ -151,17 +144,15 @@ class DistributionGraph(GraphFactory):
             '[181,360]',
             '> 360',
         ]
-        self.ax.set_xticks([i for i in range(9)])
+        self.ax.set_xticks(list(range(9)))
         self.ax.set_xticklabels(interval_label)
         self.ax.set_xlabel('Delay Interval (minutes)')
         self.ax.set_title(title)
         self.canvas.draw()
 
+
 class BarGraph(GraphFactory):
     """A BarGraph tab"""
-    def __init__(self, master=None, cnf={}, **kwargs):
-        super().__init__(master, cnf, **kwargs)
-
     def add_side_panel_elements(self):
         self.description = 'Compare flaws of various airlines'
         self.side_panel.add_history_box()
@@ -186,27 +177,31 @@ class BarGraph(GraphFactory):
             self.ax.set_ylabel('Percentage')
         self.canvas.draw()
 
+
 class Storytelling(tk.Frame):
+    """A Data Storytelling tab"""
     def __init__(self, master=None, cnf={}, **kwargs):
         super().__init__(master, cnf, **kwargs)
         self.plotted = False
         self.init_components()
 
     def init_components(self):
-        self.fig, self.ax = plt.subplots(2,3,layout='constrained')
+        """initialise components"""
+        self.fig, self.ax = plt.subplots(2, 3, layout='constrained')
         self.canvas = FigureCanvasTkAgg(figure=self.fig, master=self)
         self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
         self.label_frame = tk.Frame(self)
         self.label_frame.pack(side='right', fill='both', expand=True)
 
     def plot_graph(self, datas):
+        """plot the graphs in the storytelling page"""
         if not self.plotted:
             methods = [self.__plot_pie,
-                    self.__plot_corr,
-                    self.__plot_box,
-                    self.__plot_hist,
-                    self.__plot_bar,
-                    self.__plot_bar]
+                       self.__plot_corr,
+                       self.__plot_box,
+                       self.__plot_hist,
+                       self.__plot_bar,
+                       self.__plot_bar]
 
             for ax, data, method in zip(self.ax.ravel(), datas[0], methods):
                 graph_data = data[0]
@@ -217,19 +212,21 @@ class Storytelling(tk.Frame):
             self.plotted = True
 
     def __create_desc_stat_labels(self, data):
+        """A method to fill descriptive statistics in the side panel"""
         for i in data.split('\n'):
             label = tk.Label(self.label_frame, text=i)
             label.pack(anchor='w', padx=10, pady=5)
 
-
     def __plot_pie(self, ax, data, title):
-        ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%', pctdistance=1.15,
-                    labeldistance=1.25, radius = 0.9)
+        """Plot pie graph"""
+        ax.pie(data, startangle=90, counterclock=False, autopct='%1.1f%%',
+               pctdistance=1.15, labeldistance=1.25, radius=0.9)
         ax.set_title(title)
         ax.legend(['Flights not Cancelled', 'Flights Cancelled'])
         ax.set_title(title)
 
     def __plot_corr(self, ax, data, title):
+        """Plot correlation graph"""
         sns.scatterplot(x="average_delay_mins",
                         y="previous_year_month_average_delay",
                         data=data, ax=ax)
@@ -238,10 +235,12 @@ class Storytelling(tk.Frame):
         ax.set_title(title)
 
     def __plot_box(self, ax, data, title):
+        """plot boxplot"""
         sns.boxplot(data=data, ax=ax)
         ax.set_title(title)
 
     def __plot_hist(self, ax, data, title):
+        """plot histogram (distribution graph)"""
         sns.barplot(x=data['Interval'], y=data['Percent'], ax=ax)
         interval_label = [
             '< -15',
@@ -254,15 +253,16 @@ class Storytelling(tk.Frame):
             '[181,360]',
             '> 360',
         ]
-        ax.set_xticks([i for i in range(9)])
+        ax.set_xticks(list(range(9)))
         ax.set_xticklabels(interval_label)
         ax.set_xlabel('Delay Interval (minutes)')
         ax.set_title(title)
         ax.tick_params(axis='x', labelrotation=45)
 
     def __plot_bar(self, ax, data, title):
-        bar = sns.barplot(x=data[0], y=data[1], ax=ax)
-        for item in bar.get_xticklabels():
+        """plot bar graphs"""
+        bar_plt = sns.barplot(x=data[0], y=data[1], ax=ax)
+        for item in bar_plt.get_xticklabels():
             item.set_rotation(20)
         if 'Delays' in title:
             ax.set_ylabel('Average Delay (minutes)')
