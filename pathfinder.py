@@ -1,9 +1,12 @@
+"""An algorithms to find a path from one airport to another. Also a part of
+01219217 Data Structure and Algorithm I Course Project"""
 import heapq
-import pandas as pd
+
 
 class Pathfinder:
-    """Find a path from one airport to another based on flights cancellation and average delays.
-    This is the same algorithm in 01219217 Data Structure and Algorithm I Course Project with some
+    """Find a path from one airport to another based on flights cancellation
+    and average delays. This is the same algorithm in
+    01219217 Data Structure and Algorithm I Course Project with some
     modifications to return the flight route instead of printing it."""
     def __init__(self, df):
         self.df = df
@@ -50,7 +53,7 @@ class Pathfinder:
                 if adj[origin][destination][index] > thing[index]:
                     adj[origin][destination] = thing
                 elif adj[origin][destination][index] == thing[index]\
-                and adj[origin][destination][(index+1)%2] > thing[(index+1)%2]:
+                and adj[origin][destination][(index+1) % 2] > thing[(index+1) % 2]:
                     adj[origin][destination] = thing
             else:
                 adj[origin][destination] = thing
@@ -62,11 +65,11 @@ class Pathfinder:
 
     def dijkstra(self, adj_list, s, index=0):
         """Dijkstra's Algorithm"""
-        dist = {node:[float('inf'), float('inf')] for node in adj_list}
-        dist[s] = [0,0]
+        dist = {node: [float('inf'), float('inf')] for node in adj_list}
+        dist[s] = [0, 0]
         parent = {}
         parent_airline = {}
-        bag = [(s, [0,0])]
+        bag = [(s, [0, 0])]
 
         while bag:
             u, dist_u = heapq.heappop(bag)
@@ -76,13 +79,15 @@ class Pathfinder:
                 if dist_u[index] + w[index] < dist[v][index]:
                     dist[v][index] = dist_u[index] + w[index]
                     # Keep tracks of the other attribute
-                    dist[v][(index+1)%2] = dist_u[(index+1)%2] + w[(index+1)%2]
+                    dist[v][(index+1) % 2] = dist_u[(index+1) % 2] + w[(index+1) % 2]
                     parent[v] = u
                     parent_airline[v] = w[2]    # keep tracks of the airline
-                    heapq.heappush(bag, (v, [dist_u[index] + w[index], dist_u[(index+1)%2] + w[(index+1)%2]]))
+                    thing = (v, [dist_u[index] + w[index],
+                                 dist_u[(index+1) % 2] + w[(index+1) % 2]])
+                    heapq.heappush(bag, thing)
         return parent, parent_airline, dist
 
-    def linear_search(self, adj_list,start,destination):
+    def linear_search(self, adj_list, start, destination):
         """Linear Search Algorithm"""
         try:
             direct_path = adj_list[start][destination]

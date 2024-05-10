@@ -2,10 +2,10 @@
 import tkinter as tk
 from tkinter import ttk
 
+import matplotlib.pyplot as plt
 from graphs import GraphFactory, Storytelling
 from descstat import DescStat
 from path_ui import PathUI
-import matplotlib.pyplot as plt
 
 
 class TabManager(tk.Tk):
@@ -15,16 +15,16 @@ class TabManager(tk.Tk):
         self.title('UK Flight')
         self.protocol('WM_DELETE_WINDOW', exit)
         self.graph_factory = GraphFactory
-        self.graph_dict = {'Compare Delay with Previous Year':'Corr',
-                           'Flights Cancelled vs Overall Flights' : 'Pie',
-                           'Distribution of Delays' : 'Dist',
-                           'Comparing Flight Cancellations' : 'flights_cancelled_percent',
-                           'Comparing Average Delays' : 'average_delay_mins'}
+        self.graph_dict = {'Compare Delay with Previous Year': 'Corr',
+                           'Flights Cancelled vs Overall Flights': 'Pie',
+                           'Distribution of Delays': 'Dist',
+                           'Comparing Flight Cancellations': 'flights_cancelled_percent',
+                           'Comparing Average Delays': 'average_delay_mins'}
         self.init_components()
 
     def init_components(self):
         """Initialise components"""
-        pack = {'side':'left', 'expand':True, 'fill':'both'}
+        pack = {'side': 'left', 'expand': True, 'fill': 'both'}
         self.create_menu_bar()
         self.tab_controller = ttk.Notebook(self)
 
@@ -40,7 +40,7 @@ class TabManager(tk.Tk):
         self.desc_stat.pack(pack)
         self.tab_controller.add(self.desc_stat, text='Descriptive Statistics')
 
-        for key,val in self.graph_dict.items():
+        for key, val in self.graph_dict.items():
             graph = self.graph_factory.get_instance(val, self)
             graph.pack(pack)
             self.tab_controller.add(graph, text=key)
@@ -58,10 +58,11 @@ class TabManager(tk.Tk):
 
     def get_current_tab_name(self) -> str:
         """Get the name of the tab that's currently active"""
+        name = self.tab_controller.tab(self.tab_controller.select(), "text")
         try:
-            return self.graph_dict[self.tab_controller.tab(self.tab_controller.select(), "text")]
+            return self.graph_dict[name]
         except KeyError:
-            return self.tab_controller.tab(self.tab_controller.select(), "text")
+            return name
 
     def get_current_graph(self) -> tk.Frame:
         """Get the graph that's currently displayed"""
@@ -85,10 +86,3 @@ class TabManager(tk.Tk):
         def bind_function(event):
             func(self.get_current_tab_name())
         self.tab_controller.bind("<<NotebookTabChanged>>", bind_function, add)
-
-if __name__ == '__main__':
-    root = tk.Tk()
-    a = GraphFactory.get_instance('Corr', root)
-    b = GraphFactory.get_instance('Corr', root)
-    print(id(a))
-    print(id(b))

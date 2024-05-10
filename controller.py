@@ -2,6 +2,7 @@
 from tkinter import messagebox
 from pathfinder import Pathfinder
 
+
 class Controller:
     """The Controller class"""
     def __init__(self, view, model):
@@ -33,7 +34,7 @@ class Controller:
         data.sort()
         self.view.desc_stat.val = [''] + data
         self.view.desc_stat.binder(self.insert_desc_stat_text)
-    
+
     def insert_desc_stat_text(self, airline=''):
         """Insert to the textbox"""
         describe = self.model.desc_stat_data(airline)
@@ -52,7 +53,8 @@ class Controller:
             options = self.view.path_ui.side_panel.get_selector_options()
             if not self.pathfinder:
                 self.pathfinder = Pathfinder(self.model.df)
-            flights = self.pathfinder.find_flight_path(options['Origin'], options['Destination'])
+            flights = self.pathfinder.find_flight_path(options['Origin'],
+                                                       options['Destination'])
             self.view.path_ui.create_subframes(flights)
         except ValueError as v:
             messagebox.showerror('Error', v)
@@ -120,8 +122,7 @@ class Controller:
         if panel.history_box.values:
             self.activate_plot('')
         else:
-            self.view.get_current_graph().ax.clear()
-            self.view.get_current_graph().canvas.draw()
+            self.view.get_current_graph().reset_canvas()
 
     def activate_plot(self, event):
         """Plot the graph"""
@@ -149,6 +150,7 @@ class Controller:
             self.feed_data(next_selector, filters)
             if panel.has_history_box:
                 panel.history_box.values = []
+                self.view.get_current_graph().reset_canvas()
                 panel.set_button_state('ADD', 'disabled')
                 panel.set_button_state('REMOVE', 'disabled')
                 self.feed_data(panel.get_selector('Airline'), filters)
@@ -179,6 +181,7 @@ class Controller:
         self.view.storytelling.plot_graph(datas)
 
     def dist_default_view(self):
+        """Display the default view of distribution graph (histogram)"""
         graph = self.view.get_current_graph()
         panel = graph.side_panel
         if not graph.initialised:
@@ -188,8 +191,8 @@ class Controller:
                 self.selector_selected(selector.label)
             graph.plot_graph(data, title)
 
-
     def bar_default_view(self, name):
+        """Display default views of the bar graphs"""
         graph = self.view.get_current_graph()
         if not graph.initialised:
             graph.initialised = True

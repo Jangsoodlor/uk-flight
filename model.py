@@ -1,7 +1,7 @@
 """Contains models of the program"""
-import os
 import pandas as pd
 from numpy import number
+
 
 class Model:
     """The model class"""
@@ -10,7 +10,7 @@ class Model:
         self.__df.reset_index(inplace=True)
 
     @classmethod
-    def remove_outlier(cls, dataframe, column:list = None) -> pd.DataFrame:
+    def remove_outlier(cls, dataframe, column: list = None) -> pd.DataFrame:
         """A class method to remove outliers"""
         temp_df = dataframe.copy()
         if not column:
@@ -26,7 +26,9 @@ class Model:
         """Returns the dataframe"""
         return self.__df
 
-    def __filter_origin_destination(self, temp_df: pd.DataFrame, origin: str, destination: str):
+    def __filter_origin_destination(self, temp_df: pd.DataFrame,
+                                    origin: str,
+                                    destination: str):
         """Filters the origin and destination of a flight"""
         if origin:
             temp_df = temp_df[temp_df['reporting_airport'] == origin]
@@ -34,17 +36,20 @@ class Model:
             temp_df = temp_df[temp_df['origin_destination'] == destination]
         return temp_df
 
-    def desc_stat_data(self, origin: str=''):
+    def desc_stat_data(self, origin: str = ''):
         """Returns data for Descriptive Statistics"""
         temp_df = self.df.copy()
         if origin:
             title = f'Average delay of flights departed from {origin} (minutes)\n'
-            temp_df =  temp_df[temp_df['reporting_airport'] == origin]
+            temp_df = temp_df[temp_df['reporting_airport'] == origin]
         else:
             title = 'Average delay of all Flights (minutes)\n'
         return title + str(temp_df['average_delay_mins'].describe())[:-41]
 
-    def corr_data(self, airline: str='', origin: str='', destination: str=''):
+    def corr_data(self,
+                  airline: str = '',
+                  origin: str = '',
+                  destination: str = ''):
         """Returns data for Correlation Plot"""
         temp_df = self.df.copy()
         title = 'Average delay of All Airlines'
@@ -56,25 +61,35 @@ class Model:
             if destination:
                 title += f' to {destination}'
 
-        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
-        temp_df = temp_df.loc[:, ['average_delay_mins', 'previous_year_month_average_delay']]
+        temp_df = self.__filter_origin_destination(temp_df,
+                                                   origin,
+                                                   destination)
+        temp_df = temp_df.loc[:, ['average_delay_mins',
+                                  'previous_year_month_average_delay']]
         corr = temp_df.corr()['average_delay_mins']['previous_year_month_average_delay']
         coefficient = f'\nCorrelation Coefficient = {corr:.4f}'
         return temp_df, title+coefficient
 
-    def bar_graph_data(self, airlines: list, compare, origin: str='', destination: str=''):
+    def bar_graph_data(self, airlines: list,
+                       compare, origin: str = '',
+                       destination: str = ''):
         """Returns data for bar graph"""
         if not airlines:
             raise ValueError('Please select at least 1 airline')
         temp_df = self.df[self.df['airline_name'].isin(airlines)]
-        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
+        temp_df = self.__filter_origin_destination(temp_df,
+                                                   origin,
+                                                   destination)
         temp_df = temp_df.loc[:, ['airline_name', compare]]
         temp_df = temp_df.groupby('airline_name').mean()
         temp_df = temp_df.reset_index()
         title = f'Comparing {compare}'
-        return (temp_df.iloc[:,0], temp_df.iloc[:,1]), title
+        return (temp_df.iloc[:, 0], temp_df.iloc[:, 1]), title
 
-    def pie_chart_data(self, airline: str='', origin: str='', destination: str=''):
+    def pie_chart_data(self,
+                       airline: str = '',
+                       origin: str = '',
+                       destination: str = ''):
         """Returns data for pie chart"""
         temp_df = self.df.copy()
         title = 'Flights cancellation rate'
@@ -82,19 +97,24 @@ class Model:
             temp_df = self.df[self.df['airline_name'] == airline]
             title += f' of {airline}'
         if origin:
-            title+= f' from {origin}'
+            title += f' from {origin}'
         if destination:
             title += f' to {destination}'
-        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
-        temp_df = temp_df.loc[:, ['number_flights_matched', 'number_flights_cancelled']]
+        temp_df = self.__filter_origin_destination(temp_df,
+                                                   origin,
+                                                   destination)
+        temp_df = temp_df.loc[:, ['number_flights_matched',
+                                  'number_flights_cancelled']]
         return temp_df.sum(), title
 
-    def distribution_data(self, airline:str, origin:str, destination:str):
+    def distribution_data(self, airline: str, origin: str, destination: str):
         """Returns data for distribution graph (histogram)"""
-        if not(airline and origin and destination):
+        if not (airline and origin and destination):
             raise ValueError('Please fill in all fields')
         temp_df = self.df[self.df['airline_name'] == airline]
-        temp_df = self.__filter_origin_destination(temp_df, origin, destination)
+        temp_df = self.__filter_origin_destination(temp_df,
+                                                   origin,
+                                                   destination)
         filters = ['flights_more_than_15_minutes_early_percent',
                    'flights_15_minutes_early_to_1_minute_early_percent',
                    'flights_0_to_15_minutes_late_percent',
@@ -148,11 +168,11 @@ class Model:
         box = Model.remove_outlier(self.df)['average_delay_mins']
         box_title = 'Average Delays of all Flights'
         hist = self.distribution_demo_data()[0]
-        hist_title = 'Delay of the most Frequent Flight Route'
+        hist_title = 'Delay of the most\nFrequent Flight Route'
         cancel = self.bar_graph_demo_data('flights_cancelled_percent')[0]
-        cancel_title = 'Cancellation Rate of\ntop 3 airlines with the most flights'
+        cancel_title = 'Cancellation Rate of\ntop 3 airlines with most flights'
         delay = self.bar_graph_demo_data('average_delay_mins')[0]
-        delay_title = 'Delays of top 3 airlines\nwith the most flights'
+        delay_title = 'Delays of top 3 airlines\nwith most flights'
 
         return [[pie, pie_title],
                 [corr, corr_title],
@@ -161,13 +181,13 @@ class Model:
                 [cancel, cancel_title],
                 [delay, delay_title]], self.desc_stat_data()
 
-    def get_selector_data(self, name:str, filters:dict=None):
+    def get_selector_data(self, name: str, filters: dict = None):
         """Get the appropriate data for a selector object"""
-        translate = {'Airline':'airline_name',
-                          'Origin (Optional)' : 'reporting_airport',
-                          'Origin' : 'reporting_airport',
-                          'Destination (Optional)' : 'origin_destination',
-                          'Destination' : 'origin_destination'}
+        translate = {'Airline': 'airline_name',
+                     'Origin (Optional)': 'reporting_airport',
+                     'Origin': 'reporting_airport',
+                     'Destination (Optional)': 'origin_destination',
+                     'Destination': 'origin_destination'}
 
         temp_df = self.df.copy()
         if filters:
@@ -179,9 +199,9 @@ class Model:
 
     def get_graph_data(self, name, options):
         """Get the data depending on the graph's type"""
-        translate = {'Corr':self.corr_data,
-                     'Pie' : self.pie_chart_data,
-                     'Dist' : self.distribution_data}
+        translate = {'Corr': self.corr_data,
+                     'Pie': self.pie_chart_data,
+                     'Dist': self.distribution_data}
         airline = None
         origin = None
         destination = None

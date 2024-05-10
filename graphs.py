@@ -72,6 +72,11 @@ class GraphFactory(tk.Frame, abc.ABC):
         """An abstract method to plot the graphs"""
         raise NotImplementedError('Abstract Method')
 
+    def reset_canvas(self):
+        """resets the canvas"""
+        self.ax.clear()
+        self.canvas.draw()
+
 
 class CorrGraph(GraphFactory):
     """A Correlation Graph tab"""
@@ -186,9 +191,7 @@ class Storytelling(tk.Frame):
         """initialise components"""
         self.fig, self.ax = plt.subplots(2, 3, layout='constrained')
         self.canvas = FigureCanvasTkAgg(figure=self.fig, master=self)
-        self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
         self.label_frame = tk.Frame(self)
-        self.label_frame.pack(side='right', fill='both', expand=True)
 
     def plot_graph(self, datas):
         """plot the graphs in the storytelling page"""
@@ -207,6 +210,8 @@ class Storytelling(tk.Frame):
             self.canvas.draw()
             self.__create_desc_stat_labels(datas[1])
             self.plotted = True
+            self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
+            self.label_frame.pack(side='right', fill='both', expand=True)
 
     def __create_desc_stat_labels(self, data):
         """A method to fill descriptive statistics in the side panel"""
@@ -235,6 +240,7 @@ class Storytelling(tk.Frame):
         """plot boxplot"""
         sns.boxplot(data=data, ax=ax)
         ax.set_title(title)
+        ax.set_ylabel('minutes')
 
     def __plot_hist(self, ax, data, title):
         """plot histogram (distribution graph)"""
@@ -264,5 +270,6 @@ class Storytelling(tk.Frame):
         if 'Delays' in title:
             ax.set_ylabel('Average Delay (minutes)')
         else:
-            ax.set_ylabel('Percentage')
+            ax.set_ylabel('Percent')
         ax.set_title(title)
+        ax.set_xlabel('Airlines')
