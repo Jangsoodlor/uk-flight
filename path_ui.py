@@ -45,10 +45,13 @@ class PathUI(tk.Frame):
             lab.pack(anchor='w', pady=10, fill='both', expand=True)
         else:
             for flight in flights:
-                frm = tk.Frame(self.inner_frame)
-                frm_img = tk.Frame(frm)
-                self.__make_logo(frm_img, flight[0])
-                frm_img.pack(side='left', anchor='w', padx=20)
+                try:
+                    frm = tk.Frame(self.inner_frame)
+                    frm_img = tk.Frame(frm)
+                    self.__make_logo(frm_img, flight[0])
+                    frm_img.pack(side='left', anchor='w', padx=20)
+                except FileNotFoundError:
+                    pass
 
                 frm_text = tk.Frame(frm)
                 self.__make_description(frm_text, flight)
