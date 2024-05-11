@@ -9,6 +9,7 @@ A program to compute and show statistics of flight routes from the United Kingdo
 ![1](screenshots/2024-05-10-154418-python.png)
 ![2](screenshots/2024-05-10-154431-python.png)
 ![3](screenshots/2024-05-10-154503-python.png)
+![pie](screenshots/2024-05-10-154520-python.png)
 ![4](screenshots/2024-05-10-154537-python.png)
 ![5](screenshots/2024-05-10-154542-python.png)
 ![6](screenshots/2024-05-10-154548-python.png)
