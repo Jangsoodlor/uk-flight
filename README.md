@@ -14,7 +14,7 @@ A program to compute and show statistics of flight routes from the United Kingdo
 ![6](screenshots/2024-05-10-154548-python.png)
 
 ## How to install
-0. Have a Python interpreter installed on your PC
+0. Have Python 3.11 or newer installed on your machine
 1. Clone this repository, or download it as a zip file and extract it. The dataset is already included in `./data` directory.
     ```
     git clone https://github.com/Jangsoodlor/uk-flight.git
@@ -27,8 +27,7 @@ A program to compute and show statistics of flight routes from the United Kingdo
     ```
     pip install -r requirements.txt
     ```
-
-For more information, including how to set up virtual environment, please refer to [this wiki page](https://github.com/Jangsoodlor/uk-flight/wiki/Installation-Guide).
+For more information, including how to set up a virtual environment, please refer to [this wiki page](https://github.com/Jangsoodlor/uk-flight/wiki/Installation-Guide).
 
 ## How to run
 1. Install the program as explained in the [How to install](#how-to-install) section.
